@@ -289,7 +289,7 @@ namespace APP.Utility.HttpClientUtils
             System.Net.ServicePointManager.Expect100Continue = false;
             var servicePoint = System.Net.ServicePointManager.FindServicePoint(new Uri(url));
             if (servicePoint != null)
-                servicePoint.ConnectionLeaseTimeout = (1000 * 60 * 5);          //★★修复目标方因蓝绿部署导致的请求失败 默认5分钟回收★★
+                servicePoint.ConnectionLeaseTimeout = (1000 * 60 * 5);
 
             if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
             {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using APP.Utility.Extension;
 
 namespace APP.Utility
 {
@@ -15,17 +16,33 @@ namespace APP.Utility
         /// <returns>当前客户端的IP</returns>
         public static string ClientIP
         {
-            get
-            {
-                string result = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+            get {
+                string result = HttpContext.Current?.Request.ServerVariables["REMOTE_ADDR"];
                 if (string.IsNullOrWhiteSpace(result))
-                    result = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+                    result = HttpContext.Current?.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
 
                 if (string.IsNullOrWhiteSpace(result))
-                    result = HttpContext.Current.Request.UserHostAddress;
+                    result = HttpContext.Current?.Request.UserHostAddress;
 
                 if (string.IsNullOrWhiteSpace(result) || !IsIP(result))
                     return "127.0.0.1";
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// 获取服务端的IP
+        /// </summary>
+        public static string ServerIP
+        {
+            get {
+                string result = string.Empty;
+
+                result = HttpContext.Current?.Request.ServerVariables["LOCAL_ADDR"];
+
+                if (!result.IsIP())
+                    result = "127.0.0.1";
 
                 return result;
             }
@@ -86,6 +103,29 @@ namespace APP.Utility
         public static string UrlEncode(string str, Encoding encoding)
         {
             return HttpUtility.UrlEncode(str, encoding);
+        }
+
+        /// <summary>
+        /// <para>将 URL 中的参数名称/值编码为合法的格式。</para>
+        /// <para>可以解决类似这样的问题：假设参数名为 tvshow, 参数值为 Tom&Jerry，如果不编码，可能得到的网址： http://a.com/?tvshow=Tom&Jerry&year=1965 编码后则为：http://a.com/?tvshow=Tom%26Jerry&year=1965 </para>
+        /// <para>实践中经常导致问题的字符有：'&', '?', '=' 等</para>
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string UrlEscape(string source)
+        {
+            if (source == null)
+                return null;
+
+            return Uri.EscapeDataString(source);
+        }
+
+        public static string UrlUnescape(string source)
+        {
+            if (source == null)
+                return null;
+
+            return Uri.UnescapeDataString(source);
         }
 
         #endregion Url编解码
@@ -178,17 +218,18 @@ namespace APP.Utility
                 return defaultvalue;
         }
 
-
-        public static DateTime ConvertStringToDateTime(string str, DateTime defaultvalue)
+        public static DateTime ConvertStringToDateTime(string str, string defaultvalue = "1900-01-01 00:00:00.000")
         {
-            DateTime result = DateTime.MinValue;
+            DateTime result;
 
-            if (string.IsNullOrWhiteSpace(str))
-                return defaultvalue;
-            else if (DateTime.TryParse(str, out result))
-                return result;
+            if (str.IsDateTime())
+                result = DateTime.Parse(str);
+            else if (defaultvalue.IsDateTime())
+                result = DateTime.Parse(defaultvalue);
             else
-                return defaultvalue;
+                result = new DateTime(1900, 1, 1);
+
+            return result;
         }
 
         #endregion 类型转换

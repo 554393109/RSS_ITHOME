@@ -79,7 +79,7 @@ namespace APP.Utility.Extension
             return false;
         }
 
-        public static string toFormat(this string value, params object[] args)
+        public static string ToFormat(this string value, params object[] args)
         {
             if (String.IsNullOrWhiteSpace(value))
             {
@@ -93,20 +93,6 @@ namespace APP.Utility.Extension
             if (array != null || array.Length > 0)
             {
                 return String.Join(separator, array);
-            }
-            return String.Empty;
-        }
-
-        public static string Join(this int[] array, string separator)
-        {
-            if (array != null || array.Length > 0)
-            {
-                string[] strArray = new string[array.Length];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    strArray[i] = array[i].ToString();
-                }
-                return String.Join(separator, strArray);
             }
             return String.Empty;
         }
@@ -129,6 +115,21 @@ namespace APP.Utility.Extension
                 foreach (string item in array)
                 {
                     if (item.Equals(value))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool Contains(this string[] array, string value, StringComparison comparisonType)
+        {
+            if (array != null && array.Count() > 0)
+            {
+                foreach (string item in array)
+                {
+                    if (item.Equals(value, comparisonType))
                     {
                         return true;
                     }
@@ -160,22 +161,110 @@ namespace APP.Utility.Extension
             return Convert.ToInt32(value);
         }
 
+        public static long ToInt64(this string value)
+        {
+            return Convert.ToInt64(value);
+        }
+
+        public static bool ToBoolean(this string value)
+        {
+            return Convert.ToBoolean(value);
+        }
+
+        public static T ToEnum<T>(this string value)
+        {
+            var @enum = (T)Enum.Parse(typeof(T), value, true);
+            return @enum;
+        }
+
+        public static bool ToTryEnum<T>(this string value, out T result)
+            where T : struct
+        {
+            var success = Enum.TryParse<T>(value, true, out result);
+            return success;
+        }
+
+
+
+        /// <summary>
+        /// 半角转全角(SBC case)
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToSBC(this string value)
+        {
+            //半角转全角：
+            char[] c = value.ToCharArray();
+            for (int i = 0; i < c.Length; i++)
+            {
+                if (c[i] == 32)
+                {
+                    c[i] = (char)12288;
+                    continue;
+                }
+                if (c[i] < 127)
+                    c[i] = (char)(c[i] + 65248);
+            }
+            return new string(c);
+        }
+
+        /// <summary>
+        ///  全角转半角
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToDBC(this string value)
+        {
+            char[] c = value.ToCharArray();
+            for (int i = 0; i < c.Length; i++)
+            {
+                if (c[i] == 12288)
+                {
+                    c[i] = (char)32;
+                    continue;
+                }
+                if (c[i] > 65280 && c[i] < 65375)
+                    c[i] = (char)(c[i] - 65248);
+            }
+            return new string(c);
+        }
+
+
+
+
 
 
         /// <summary>
         /// 截取字符串
         /// 减3位 拼省略号【...】
         /// </summary>
-        /// <param name="str_original"></param>
+        /// <param name="value"></param>
         /// <param name="len">最大长度</param>
+        /// <param name="withSuffix">是否拼接【...】</param>
         /// <returns></returns>
-        public static string CutString(this string str_original, int len)
+        public static string CutString(this string value, int len, bool withSuffix = true)
         {
-            if (!string.IsNullOrWhiteSpace(str_original) && str_original.Length > len)
-                return str_original.Remove(len - 3) + "...";
+            if (!string.IsNullOrWhiteSpace(value) && value.Length > len)
+                return value.Remove(len - 3) + (withSuffix ? "..." : string.Empty);
             else
-                return str_original;
+                return value;
         }
+
+        /// <summary>
+        /// 切割字符串
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="separator">分割符号</param>
+        /// <param name="options">设置省略返回的数组中的空数组元素</param>
+        /// <returns></returns>
+        public static string[] GetArray(this string value, string separator, StringSplitOptions options = StringSplitOptions.RemoveEmptyEntries)
+        {
+            return value.Split(new string[] { separator }, options);
+        }
+
+
+
+
 
 
         /// <summary>
@@ -233,34 +322,74 @@ namespace APP.Utility.Extension
             return Uri.UnescapeDataString(source);
         }
 
-        /// <summary>
-        /// 封装System.Web.HttpUtility.UrlEncode
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-#if DEBUG
-        [Obsolete("此方法已过期，建议使用APP.Utility.StringExtension.UrlEscape()方法")]
-#endif
-        public static string UrlEncode(this string url)
+        public static byte[] HexStrToByte(this string source)
         {
-            if (url == null)
-                return string.Empty;
-
-            return System.Web.HttpUtility.UrlEncode(url);
+            source = source.Replace(" ", "");
+            if ((source.Length % 2) != 0)
+                source += " ";
+            byte[] returnBytes = new byte[source.Length / 2];
+            for (int i = 0; i < returnBytes.Length; i++)
+                returnBytes[i] = Convert.ToByte(source.Substring(i * 2, 2), 16);
+            return returnBytes;
         }
 
+        //        /// <summary>
+        //        /// 封装System.Web.HttpUtility.UrlEncode
+        //        /// </summary>
+        //        /// <param name="url"></param>
+        //        /// <returns></returns>
+        //#if DEBUG
+        //        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlEscape()方法")]
+        //#endif
+        //        public static string UrlEncode(this string url)
+        //        {
+        //            if (url == null)
+        //                return string.Empty;
+
+        //            return System.Web.HttpUtility.UrlEncode(url);
+        //        }
+
+
+        ///// <summary>
+        ///// 封装System.Web.HttpUtility.UrlDecode
+        ///// </summary>
+        ///// <param name="url"></param>
+        ///// <returns></returns>
+        //public static string UrlDecode(this string url)
+        //{
+        //    if (url == null)
+        //        return string.Empty;
+
+        //    return System.Web.HttpUtility.UrlDecode(url);
+        //}
+
+        public static string TrimAny(this string source, string oldValue = " ")
+        {
+            if (source == null)
+                return null;
+
+            return source.Replace(oldValue, string.Empty);
+        }
 
         /// <summary>
-        /// 封装System.Web.HttpUtility.UrlDecode
+        /// 将多个字符串替换为新字符串
         /// </summary>
-        /// <param name="url"></param>
+        /// <param name="source"></param>
+        /// <param name="arr_oldValue"></param>
+        /// <param name="newValue"></param>
         /// <returns></returns>
-        public static string UrlDecode(this string url)
+        public static string ReplaceAny(this string source, string[] arr_oldValue, string newValue = "")
         {
-            if (url == null)
-                return string.Empty;
+            if (source == null)
+                return null;
 
-            return System.Web.HttpUtility.UrlDecode(url);
+            if (arr_oldValue?.Length > 0)
+            {
+                foreach (string oldValue in arr_oldValue)
+                    source = source.Replace(oldValue, newValue);
+            }
+
+            return source;
         }
     }
 }

@@ -14,6 +14,8 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace APP.Utility.Extension
@@ -111,11 +113,55 @@ namespace APP.Utility.Extension
         /// <returns></returns>
         public static bool IsDateTime(this object obj)
         {
-            bool isCorrect = false;
-            DateTime val;
+            var isCorrect = false;
+            var dt = default(DateTime);
 
             if (obj != null)
-                isCorrect = DateTime.TryParse(obj.ToString(), out val);
+                isCorrect = DateTime.TryParse(obj.ToString(), out dt);
+
+            return isCorrect;
+        }
+
+        /// <summary>
+        /// 判断是否DateTime
+        /// 【含年月日时分秒使用】
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static bool IsDateTime2(this object obj)
+        {
+            var isCorrect = false;
+            var dt = default(DateTime);
+
+            var val = obj.ValueOrEmpty();
+            if (!val.IsNullOrWhiteSpace())
+            {
+                if (val.IndexOf("年", StringComparison.OrdinalIgnoreCase) > -1)
+                    // 2018年01月02日 12点34分56秒
+                    isCorrect
+                        = val.IndexOf("年", StringComparison.OrdinalIgnoreCase) == -1
+                        ? DateTime.TryParse(val.Replace("  ", " "), out dt)
+                        : DateTime.TryParse(val.Replace("  ", " ").Replace("年", "-").Replace("月", "-").Replace("日", string.Empty).Replace("时", ":").Replace("分", ":").Replace("秒", string.Empty), out dt);
+            }
+
+            return isCorrect;
+        }
+
+        /// <summary>
+        /// 判断是否DateTime且是默认时间
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static bool IsDateTimeDefault(this object obj)
+        {
+            var isCorrect = false;
+            var dt = default(DateTime);
+
+            if (obj != null
+                && DateTime.TryParse(obj.ToString(), out dt))
+            {
+                isCorrect = (new DateTime(1900, 1, 1)) == dt;
+            }
 
             return isCorrect;
         }
@@ -136,5 +182,71 @@ namespace APP.Utility.Extension
         }
 
         #endregion 类型判断
+
+        #region 类型转换
+
+        public static bool ToBoolean(this object obj)
+        {
+            if (obj == null)
+                return false;
+
+            bool result = false;
+            bool.TryParse(obj.ToString(), out result);
+            return result;
+        }
+
+        #endregion 类型转换
+
+        /// <summary>
+        /// 为null时使用string.Empty
+        /// obj?.ToString() ?? string.Empty;
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static string ValueOrEmpty(this object obj)
+        {
+            //return (obj == null || string.IsNullOrWhiteSpace(obj.ToString()))
+            //    ? string.Empty
+            //    : obj.ToString();
+
+            return obj?.ToString() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 为null或空时使用val
+        /// (obj == null || string.IsNullOrWhiteSpace(obj.ToString())) ? val.ValueOrEmpty() : obj.ToString();
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="val"></param>
+        /// <returns></returns>
+        public static string ValueOrEmpty(this object obj, string val)
+        {
+            return (obj == null || string.IsNullOrWhiteSpace(obj.ToString()))
+                ? val.ValueOrEmpty()
+                : obj.ToString();
+        }
+
+        /// <summary>
+        /// 为null或空时使用取值数组中首个非空值；若取值数组不存在非空值，则返回string.Empty
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="arr_val">取值数组</param>
+        /// <returns></returns>
+        public static string ValueOrFirstNotEmpty(this object obj, params string[] arr_val)
+        {
+            if (obj == null || string.IsNullOrWhiteSpace(obj.ToString()))
+            {
+                if (arr_val == null || arr_val.Length == 0)
+                    return string.Empty;
+
+                for (int i = 0; i < arr_val.Length; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(arr_val[i]))
+                        return arr_val[i].ToString();
+                }
+            }
+
+            return obj.ToString();
+        }
     }
 }

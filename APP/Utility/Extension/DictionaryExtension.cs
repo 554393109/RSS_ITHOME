@@ -13,6 +13,7 @@
 ************************************************************************/
 
 using System.Collections;
+using System.Collections.Generic;
 
 namespace APP.Utility.Extension
 {
@@ -20,18 +21,30 @@ namespace APP.Utility.Extension
     {
         public static Hashtable ToHashtable(this IDictionary dic)
         {
-            Hashtable ht = new Hashtable();
+            var hash = new Hashtable();
 
             if (dic != null && dic.Count > 0)
             {
                 foreach (string key in dic.Keys)
                 {
                     if (key != null)
-                        ht.Add(key, dic[key]);
+                        hash.Add(key, dic[key]);
                 }
             }
 
-            return ht;
+            return hash;
         }
+
+        public static SortedDictionary<string, string> ToSortedDictionary(this Dictionary<string, object> dic)
+        {
+            var sdic = new SortedDictionary<string, string>();
+
+            foreach (string iterm in dic.Keys)
+            {
+                sdic[iterm] = dic[iterm] != null ? dic[iterm].ToString() : string.Empty;
+            }
+            return sdic;
+        }
+
     }
 }

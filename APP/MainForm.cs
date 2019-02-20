@@ -26,7 +26,7 @@ namespace APP
         private delegate void SetDataHandler(string str_Text, IEnumerator enum_dgv);
         private SetDataHandler handler = null;
 
-        public MainForm()
+        public MainForm(string[] arr_param)
         {
             InitializeComponent();
             handler = new SetDataHandler(SetData);
@@ -100,7 +100,7 @@ namespace APP
                     str_response_xml = _str_response_xml;
                     XmlDocument xmlDoc = new XmlDocument();
                     xmlDoc.LoadXml(str_response_xml);
-                    pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(xmlDoc.SelectNodes("rss/channel/pubDate")[0].InnerText, DateTime.MinValue));
+                    pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(xmlDoc.SelectNodes("rss/channel/pubDate")[0].InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     IEnumerator ienum = xmlDoc.SelectNodes("rss/channel/item").GetEnumerator();
 
                     if (this.InvokeRequired)
@@ -133,7 +133,7 @@ namespace APP
                     string title = item.SelectSingleNode("title").InnerText;
                     string link = item.SelectSingleNode("link").InnerText;
                     //string description = item.SelectSingleNode("description").InnerText;
-                    string pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue));
+                    string pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link });
                 }
             }
@@ -200,13 +200,13 @@ namespace APP
                 switch (m.WParam.ToInt32())
                 {
                     case 201:
-                    {
-                        if (this.WindowState == FormWindowState.Minimized)
-                            Show(true);
-                        else
-                            Show(false);
-                    }
-                    break;
+                        {
+                            if (this.WindowState == FormWindowState.Minimized)
+                                Show(true);
+                            else
+                                Show(false);
+                        }
+                        break;
                 }
                 break;
             }

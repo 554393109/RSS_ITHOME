@@ -26,23 +26,23 @@ namespace APP.Utility.Extension
         /// 对Hashtable里的value进行Uri.EscapeDataString，
         /// 返回一个新的Hashtable。
         /// </summary>
-        /// <param name="param"></param>
+        /// <param name="hash"></param>
         /// <returns></returns>
-        public static Hashtable UrlEscape(this Hashtable param)
+        public static Hashtable UrlEscape(this Hashtable hash)
         {
-            if (param == null)
+            if (hash == null)
                 return null;
 
             Hashtable param_new = new Hashtable();
-            foreach (string key in param.Keys)
+            foreach (string key in hash.Keys)
             {
                 if (string.IsNullOrWhiteSpace(key))
                     continue;
 
-                if (null == param[key] || string.IsNullOrWhiteSpace(param[key].ToString()))
-                    param_new[key] = param[key];
+                if (null == hash[key] || string.IsNullOrWhiteSpace(hash[key].ToString()))
+                    param_new[key] = hash[key];
                 else
-                    param_new[key] = Uri.EscapeDataString(param[key].ToString());
+                    param_new[key] = Uri.EscapeDataString(hash[key].ToString());
             }
 
             return param_new;
@@ -52,112 +52,54 @@ namespace APP.Utility.Extension
         /// 对Hashtable里的value进行Uri.UnescapeDataString，
         /// 返回一个新的Hashtable。
         /// </summary>
-        /// <param name="param"></param>
+        /// <param name="hash"></param>
         /// <returns></returns>
-        public static Hashtable UrlUnescape(this Hashtable param)
+        public static Hashtable UrlUnescape(this Hashtable hash)
         {
-            if (param == null)
+            if (hash == null)
                 return null;
 
             Hashtable param_new = new Hashtable();
-            foreach (string key in param.Keys)
+            foreach (string key in hash.Keys)
             {
                 if (string.IsNullOrWhiteSpace(key))
                     continue;
 
-                if (null == param[key] || string.IsNullOrWhiteSpace(param[key].ToString()))
-                    param_new[key] = param[key];
+                if (null == hash[key] || string.IsNullOrWhiteSpace(hash[key].ToString()))
+                    param_new[key] = hash[key];
                 else
-                    param_new[key] = Uri.UnescapeDataString(param[key].ToString());
+                    param_new[key] = Uri.UnescapeDataString(hash[key].ToString());
             }
 
             return param_new;
         }
 
-
-
-        /// <summary>
-        /// 对Hashtable里的value进行UrlEncode，
-        /// 返回一个新的Hashtable。
-        /// </summary>
-        /// <param name="param"></param>
-        /// <returns></returns>
-#if DEBUG
-        [Obsolete("此方法已过期，建议使用APP.Utility.Extension.HashtableExtension.UrlEscape()方法")]
-#endif
-        public static Hashtable UrlEncode(this Hashtable param)
+        public static Dictionary<string, string> ToDictionary(this Hashtable hash)
         {
-            if (param == null)
-                return null;
+            var dic = new Dictionary<string, string>();
 
-            Hashtable param_new = new Hashtable();
-            foreach (string key in param.Keys)
+            foreach (string key in hash.Keys)
             {
-                if (string.IsNullOrWhiteSpace(key)
-                    || null == param[key]
-                    || string.IsNullOrWhiteSpace(param[key].ToString()))
-                    continue;
-
-                param_new[key] = System.Web.HttpUtility.UrlEncode(param[key].ToString());
-            }
-
-            return param_new;
-        }
-
-
-        /// <summary>
-        /// 对Hashtable里的value进行UrlDecode，
-        /// 返回一个新的Hashtable。
-        /// </summary>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        public static Hashtable UrlDecode(this Hashtable param)
-        {
-            if (param == null)
-                return null;
-
-            Hashtable param_new = new Hashtable();
-            foreach (string key in param.Keys)
-            {
-                if (string.IsNullOrWhiteSpace(key))
-                    continue;
-
-                if (null == param[key] || string.IsNullOrWhiteSpace(param[key].ToString()))
-                    param_new[key] = param[key];
-                else
-                    param_new[key] = System.Web.HttpUtility.UrlDecode(param[key].ToString());
-            }
-
-            return param_new;
-        }
-
-
-        public static Dictionary<string, string> ToDictionary(this Hashtable ht)
-        {
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-
-            foreach (string key in ht.Keys)
-            {
-                if (ht[key] != null)
-                    dic.Add(key, ht[key].ToString());
+                if (hash[key] != null)
+                    dic.Add(key, hash[key].ToString());
             }
             return dic;
         }
 
-        public static SortedDictionary<string, string> ToSortedDictionary(this Hashtable table)
+        public static SortedDictionary<string, string> ToSortedDictionary(this Hashtable hash)
         {
             SortedDictionary<string, string> sTable = new SortedDictionary<string, string>();
 
-            foreach (string iterm in table.Keys)
+            foreach (string iterm in hash.Keys)
             {
-                sTable[iterm] = table[iterm] != null ? table[iterm].ToString() : string.Empty;
+                sTable[iterm] = hash[iterm] != null ? hash[iterm].ToString() : string.Empty;
             }
             return sTable;
         }
 
-        public static Dictionary<K, V> ToDictionary<K, V>(this Hashtable table)
+        public static Dictionary<K, V> ToDictionary<K, V>(this Hashtable hash)
         {
-            return table
+            return hash
               .Cast<DictionaryEntry>()
               .ToDictionary(kvp => (K)kvp.Key, kvp => (V)kvp.Value);
         }
@@ -165,28 +107,154 @@ namespace APP.Utility.Extension
 
         /// <summary>
         /// 遍历并返回URL参数格式,a=1&b=2
+        /// 忽略value为空的项
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="hash"></param>
         /// <returns></returns>
-        public static string toUrlParams(this Hashtable table)
+        public static string ToUrlParams(this Hashtable hash, bool needEncode = true)
         {
-            if (table.Count < 1)
+            if (hash == null || hash.Count == 0)
                 return string.Empty;
-            var parameters = table.ToDictionary<string, string>();
-            IEnumerator<KeyValuePair<string, string>> enumerator = new SortedDictionary<string, string>(parameters).GetEnumerator();
+
+            var dic = hash.ToDictionary<string, object>();
+            var enumerator = new SortedDictionary<string, object>(dic).GetEnumerator();
             StringBuilder builder = new StringBuilder();
             while (enumerator.MoveNext())
             {
-                KeyValuePair<string, string> current = enumerator.Current;
-                string key = current.Key;
-                current = enumerator.Current;
-                string str2 = current.Value;
-                if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(str2))
+                string key = enumerator.Current.Key;
+                string val = enumerator.Current.Value?.ToString();
+                if (key.IsNullOrWhiteSpace() || val.IsNullOrWhiteSpace())
+                    continue;
+
+                if (needEncode)
+                    builder.Append("&").Append(key).Append("=").Append(Uri.EscapeDataString(val));
+                else
+                    builder.Append("&").Append(key).Append("=").Append(val);
+            }
+
+            return builder.ToString().TrimStart('&');
+        }
+
+        /// <summary>
+        /// 移除空项
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <returns></returns>
+        public static Hashtable RemoveEmpty(this Hashtable hash)
+        {
+            if (hash == null)
+                return null;
+
+            var param_new = new Hashtable();
+            foreach (string key in hash.Keys)
+            {
+                if (key.IsNullOrWhiteSpace() || hash[key].IsNullOrWhiteSpace())
+                    continue;
+
+                param_new[key] = hash[key].ToString();
+            }
+
+            return param_new;
+        }
+
+        /// <summary>
+        /// 移除非空项前后空格
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <returns></returns>
+        public static Hashtable RemoveSpace(this Hashtable hash)
+        {
+            if (hash == null)
+                return null;
+
+            var param_new = new Hashtable();
+            foreach (string key in hash.Keys)
+            {
+                if (key.IsNullOrWhiteSpace() || hash[key].IsNullOrWhiteSpace())
+                    continue;
+
+                param_new[key] = hash[key].ToString().Trim();
+            }
+
+            return param_new;
+        }
+
+        /// <summary>
+        /// 判断该键值是否存在或为空或为NULL
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static bool IsNullOrWhiteSpace(this Hashtable hash, string name)
+        {
+            try
+            {
+                if (hash == null)
+                    return true;
+                if (hash.ContainsKey(name))
                 {
-                    builder.Append(key).Append("=").Append(System.Web.HttpUtility.UrlEncode(str2, Encoding.UTF8)).Append("&");
+                    var str = (hash[name] ?? string.Empty).ToString();
+                    return string.IsNullOrWhiteSpace(str);
+                }
+                return true;
+            }
+            catch { }
+            return true;
+        }
+
+        /// <summary>
+        /// 取出该键值
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="hash"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static T GetValue<T>(this Hashtable hash, string name)
+        {
+            if (hash == null || string.IsNullOrWhiteSpace(name))
+                return default(T);
+            try
+            {
+                if (hash.ContainsKey(name))
+                    return (T)hash[name];
+            }
+            catch
+            {
+            }
+            return default(T);
+        }
+
+        /// <summary>
+        /// 合并多个Hashtable
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <param name="arr_hash"></param>
+        /// <returns>返回新实例</returns>
+        public static Hashtable Merge(this Hashtable hash, params Hashtable[] arr_hash)
+        {
+            var hash_new = new Hashtable();
+
+            if (hash is Hashtable)
+            {
+                foreach (var key in hash.Keys)
+                    hash_new[key] = hash[key];
+            }
+
+            if (arr_hash != null && arr_hash.Length > 0)
+            {
+                var hash_em = arr_hash.GetEnumerator();
+                while (hash_em.MoveNext())
+                {
+                    if (hash_em.Current is Hashtable)
+                    {
+                        var hash_curr = hash_em.Current as Hashtable;
+                        foreach (var key in hash_curr.Keys)
+                            hash_new[key] = hash_curr[key];
+                    }
                 }
             }
-            return builder.ToString().Substring(0, builder.Length - 1);
+
+            return hash_new;
         }
     }
 }
