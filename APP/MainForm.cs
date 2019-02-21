@@ -22,7 +22,13 @@ namespace APP
         /// 启动参数
         /// </summary>
         private static string[] init_param = default(string[]);
-        private const string url = "https://www.ithome.com/rss/";
+        private static bool isWAP = false;
+        private static bool isShowTip = true;
+
+        private const string baseUrl_WAP = "https://m.ithome.com/";
+        private const string baseUrl_WEB = "https://www.ithome.com/";
+        private static string urlRSS = baseUrl_WEB + "rss/";
+
         private const string _title = "更新时间：{0}";
         private static string str_response_xml = string.Empty;
         private static string pubDate = string.Empty;
@@ -33,6 +39,9 @@ namespace APP
         public MainForm(string[] arr_param)
         {
             init_param = arr_param ?? new string[0] { };
+            isWAP = init_param.Contains("/m", StringComparison.OrdinalIgnoreCase);
+            isShowTip = init_param.Contains("/tip", StringComparison.OrdinalIgnoreCase);
+
             InitializeComponent();
             handler = new SetDataHandler(SetData);
             timmer.Tick += Timmer_Tick;
@@ -66,7 +75,7 @@ namespace APP
 
         private void btn_refresh_Click(object sender, EventArgs e)
         {
-            btn_refresh.Enabled = false;
+            this.btn_refresh.Enabled = false;
             GetRSS();
         }
 
@@ -76,7 +85,7 @@ namespace APP
                 var _clientContext = new ClientContext(new CommonClient());
                 try
                 {
-                    var _str_response_xml = _clientContext.Post(url, null);
+                    var _str_response_xml = _clientContext.Post(urlRSS, null);
                     if (_str_response_xml.IsNullOrWhiteSpace())
                     {
                         MessageBox.Show("没有数据");
@@ -141,7 +150,7 @@ namespace APP
                         if (arr.Length > 4)
                             newsID = "{0}{1}{2}".ToFormat(arr[arr.Length - 3], arr[arr.Length - 2], arr[arr.Length - 1]).TrimAny(".htm", ".html").TrimStart('0');
 
-                        if (!newsID.IsNullOrWhiteSpace() && init_param.Contains("/m", StringComparison.OrdinalIgnoreCase))
+                        if (!newsID.IsNullOrWhiteSpace() && isWAP)
                             link = "https://m.ithome.com/html/{0}.htm".ToFormat(newsID);
                     }
 
@@ -149,9 +158,18 @@ namespace APP
                     var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link, newsID.ValueOrEmpty() });
                 }
+
+                if (!this.ShowInTaskbar)
+                {
+                    if (isShowTip)
+                        this.notify.ShowBalloonTip(500, "有新文章", str_Text, ToolTipIcon.None);
+
+                    this.Text = "【有新文章】" + str_Text;
+                    this.notify.Text = this.Text;
+                }
             }
 
-            btn_refresh.Enabled = true;
+            this.btn_refresh.Enabled = true;
         }
 
         private void dgv_list_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -159,7 +177,7 @@ namespace APP
             if (e.ColumnIndex == 2)
             {
                 var row = this.dgv_list[e.ColumnIndex, e.RowIndex];
-                var link = (string)row.Value ?? "https://www.ithome.com/";
+                var link = row.Value.ValueOrEmpty(isWAP ? "https://m.ithome.com/" : "https://www.ithome.com/");
                 System.Diagnostics.Process.Start(link);
                 Clipboard.SetText(link);
             }
@@ -171,7 +189,7 @@ namespace APP
             {
                 var row = this.dgv_list["Link", e.RowIndex];
                 //var link = "https://www.ithome.com/rss";
-                var link = (string)row.Value ?? "https://www.ithome.com/";
+                var link = row.Value.ValueOrEmpty(isWAP ? "https://m.ithome.com/" : "https://www.ithome.com/");
                 System.Diagnostics.Process.Start(link);
                 Clipboard.SetText(link);
             }
@@ -193,6 +211,9 @@ namespace APP
             {
                 this.WindowState = FormWindowState.Normal;
                 this.ShowInTaskbar = true;
+
+                this.Text = this.Text.TrimAny("【有新文章】");
+                this.notify.Text = this.Text;
             }
             else
             {

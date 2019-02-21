@@ -32,14 +32,14 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.btn_refresh = new System.Windows.Forms.Button();
             this.dgv_list = new System.Windows.Forms.DataGridView();
-            this.btn_hide = new System.Windows.Forms.Button();
-            this.notify = new System.Windows.Forms.NotifyIcon(this.components);
-            this.cms_notify = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.exiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pubDate_sub = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Link = new System.Windows.Forms.DataGridViewLinkColumn();
             this.newsID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btn_hide = new System.Windows.Forms.Button();
+            this.notify = new System.Windows.Forms.NotifyIcon(this.components);
+            this.cms_notify = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.exiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_list)).BeginInit();
             this.cms_notify.SuspendLayout();
             this.SuspendLayout();
@@ -74,43 +74,10 @@
             this.dgv_list.ReadOnly = true;
             this.dgv_list.RowTemplate.Height = 23;
             this.dgv_list.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgv_list.Size = new System.Drawing.Size(460, 298);
+            this.dgv_list.Size = new System.Drawing.Size(460, 369);
             this.dgv_list.TabIndex = 1;
             this.dgv_list.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_list_CellClick);
             this.dgv_list.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_list_CellDoubleClick);
-            // 
-            // btn_hide
-            // 
-            this.btn_hide.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_hide.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btn_hide.Location = new System.Drawing.Point(397, 12);
-            this.btn_hide.Name = "btn_hide";
-            this.btn_hide.Size = new System.Drawing.Size(75, 23);
-            this.btn_hide.TabIndex = 0;
-            this.btn_hide.Text = "Hide";
-            this.btn_hide.UseVisualStyleBackColor = true;
-            this.btn_hide.Click += new System.EventHandler(this.btn_hide_Click);
-            // 
-            // notify
-            // 
-            this.notify.ContextMenuStrip = this.cms_notify;
-            this.notify.Icon = ((System.Drawing.Icon)(resources.GetObject("notify.Icon")));
-            this.notify.Visible = true;
-            this.notify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
-            // 
-            // cms_notify
-            // 
-            this.cms_notify.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.exiteToolStripMenuItem});
-            this.cms_notify.Name = "cms_notify";
-            this.cms_notify.Size = new System.Drawing.Size(112, 26);
-            // 
-            // exiteToolStripMenuItem
-            // 
-            this.exiteToolStripMenuItem.Name = "exiteToolStripMenuItem";
-            this.exiteToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
-            this.exiteToolStripMenuItem.Text = "Exit(&e)";
-            this.exiteToolStripMenuItem.Click += new System.EventHandler(this.exiteToolStripMenuItem_Click);
             // 
             // Title
             // 
@@ -145,12 +112,45 @@
             this.newsID.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.newsID.Width = 65;
             // 
+            // btn_hide
+            // 
+            this.btn_hide.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_hide.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btn_hide.Location = new System.Drawing.Point(397, 12);
+            this.btn_hide.Name = "btn_hide";
+            this.btn_hide.Size = new System.Drawing.Size(75, 23);
+            this.btn_hide.TabIndex = 0;
+            this.btn_hide.Text = "Hide";
+            this.btn_hide.UseVisualStyleBackColor = true;
+            this.btn_hide.Click += new System.EventHandler(this.btn_hide_Click);
+            // 
+            // notify
+            // 
+            this.notify.ContextMenuStrip = this.cms_notify;
+            this.notify.Icon = ((System.Drawing.Icon)(resources.GetObject("notify.Icon")));
+            this.notify.Visible = true;
+            this.notify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
+            // 
+            // cms_notify
+            // 
+            this.cms_notify.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.exiteToolStripMenuItem});
+            this.cms_notify.Name = "cms_notify";
+            this.cms_notify.Size = new System.Drawing.Size(112, 26);
+            // 
+            // exiteToolStripMenuItem
+            // 
+            this.exiteToolStripMenuItem.Name = "exiteToolStripMenuItem";
+            this.exiteToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
+            this.exiteToolStripMenuItem.Text = "Exit(&e)";
+            this.exiteToolStripMenuItem.Click += new System.EventHandler(this.exiteToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btn_hide;
-            this.ClientSize = new System.Drawing.Size(484, 351);
+            this.ClientSize = new System.Drawing.Size(484, 422);
             this.Controls.Add(this.dgv_list);
             this.Controls.Add(this.btn_hide);
             this.Controls.Add(this.btn_refresh);
