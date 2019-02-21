@@ -219,14 +219,14 @@ namespace APP
             {
                 this.WindowState = FormWindowState.Normal;
                 this.ShowInTaskbar = true;
-
-                this.Text = this.Text.TrimAny("【有新文章】");
-                this.notify.Text = this.Text;
             }
             else
             {
                 this.WindowState = FormWindowState.Minimized;
                 this.ShowInTaskbar = false;
+
+                this.Text = this.Text.TrimAny("【有新文章】");
+                this.notify.Text = this.Text;
             }
 
             RegKey(Handle, 201, KeyModifiers.Ctrl, Keys.Tab);
