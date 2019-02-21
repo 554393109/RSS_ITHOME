@@ -86,17 +86,25 @@ namespace APP
                 try
                 {
                     var _str_response_xml = _clientContext.Post(urlRSS, null);
+                    pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
+
                     if (_str_response_xml.IsNullOrWhiteSpace())
                     {
                         MessageBox.Show("没有数据");
+                        if (this.InvokeRequired)
+                        {
+                            this.Invoke(handler, string.Format(_title, pubDate), null);
+                        }
+                        else
+                        {
+                            this.SetData(string.Format(_title, pubDate), null);
+                        }
                         return;
                     }
 
                     if (str_response_xml.Length == _str_response_xml.Length
                         || str_response_xml.Equals(_str_response_xml, StringComparison.OrdinalIgnoreCase))
                     {
-                        pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
-
                         if (this.InvokeRequired)
                         {
                             this.Invoke(handler, string.Format(_title, pubDate), null);
