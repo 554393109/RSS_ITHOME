@@ -18,32 +18,34 @@ namespace APP
 {
     public partial class MainForm : Form
     {
+        /// <summary>
+        /// 启动参数
+        /// </summary>
+        private static string[] init_param = default(string[]);
         private const string url = "https://www.ithome.com/rss/";
         private const string _title = "更新时间：{0}";
         private static string str_response_xml = string.Empty;
         private static string pubDate = string.Empty;
-        private Timer timmer = new Timer();
+        private Timer timmer = new Timer() { Interval = 1000 * 30, Enabled = true };
         private delegate void SetDataHandler(string str_Text, IEnumerator enum_dgv);
         private SetDataHandler handler = null;
 
         public MainForm(string[] arr_param)
         {
+            init_param = arr_param ?? new string[0] { };
             InitializeComponent();
             handler = new SetDataHandler(SetData);
             timmer.Tick += Timmer_Tick;
-
-            timmer.Interval = 1000 * 30;
-            timmer.Enabled = true;
-        }
-
-        private void Timmer_Tick(object sender, EventArgs e)
-        {
-            GetRSS();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             Show(false);
+            GetRSS();
+        }
+
+        private void Timmer_Tick(object sender, EventArgs e)
+        {
             GetRSS();
         }
 
@@ -71,10 +73,10 @@ namespace APP
         private void GetRSS()
         {
             Task.Run(() => {
-                ClientContext _clientContext = new ClientContext(new CommonClient());
+                var _clientContext = new ClientContext(new CommonClient());
                 try
                 {
-                    string _str_response_xml = _clientContext.Post(url, null);
+                    var _str_response_xml = _clientContext.Post(url, null);
                     if (_str_response_xml.IsNullOrWhiteSpace())
                     {
                         MessageBox.Show("没有数据");
@@ -98,7 +100,7 @@ namespace APP
                     }
 
                     str_response_xml = _str_response_xml;
-                    XmlDocument xmlDoc = new XmlDocument();
+                    var xmlDoc = new XmlDocument();
                     xmlDoc.LoadXml(str_response_xml);
                     pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(xmlDoc.SelectNodes("rss/channel/pubDate")[0].InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     IEnumerator ienum = xmlDoc.SelectNodes("rss/channel/item").GetEnumerator();
@@ -129,12 +131,23 @@ namespace APP
                 this.dgv_list.Rows.Clear();
                 while (enum_dgv.MoveNext())
                 {
-                    XmlNode item = enum_dgv.Current as XmlNode;
-                    string title = item.SelectSingleNode("title").InnerText;
-                    string link = item.SelectSingleNode("link").InnerText;
-                    //string description = item.SelectSingleNode("description").InnerText;
-                    string pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
-                    this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link });
+                    var item = enum_dgv.Current as XmlNode;
+                    var title = item.SelectSingleNode("title").InnerText;
+                    var link = item.SelectSingleNode("link").InnerText;
+                    var newsID = string.Empty;
+                    if (!link.IsNullOrWhiteSpace())
+                    {
+                        var arr = link.GetArray("/");
+                        if (arr.Length > 4)
+                            newsID = "{0}{1}{2}".ToFormat(arr[arr.Length - 3], arr[arr.Length - 2], arr[arr.Length - 1]).TrimAny(".htm", ".html").TrimStart('0');
+
+                        if (!newsID.IsNullOrWhiteSpace() && init_param.Contains("/m", StringComparison.OrdinalIgnoreCase))
+                            link = "https://m.ithome.com/html/{0}.htm".ToFormat(newsID);
+                    }
+
+                    //var description = item.SelectSingleNode("description").InnerText;
+                    var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                    this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link, newsID.ValueOrEmpty() });
                 }
             }
 

@@ -259,6 +259,8 @@ namespace APP.Utility.Extension
         /// <returns></returns>
         public static string[] GetArray(this string value, string separator, StringSplitOptions options = StringSplitOptions.RemoveEmptyEntries)
         {
+            if (value.IsNullOrWhiteSpace())
+                return new string[0] { };
             return value.Split(new string[] { separator }, options);
         }
 
@@ -363,12 +365,41 @@ namespace APP.Utility.Extension
         //    return System.Web.HttpUtility.UrlDecode(url);
         //}
 
+        /// <summary>
+        /// 移除字符串
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="oldValue"></param>
+        /// <returns></returns>
         public static string TrimAny(this string source, string oldValue = " ")
         {
             if (source == null)
                 return null;
 
             return source.Replace(oldValue, string.Empty);
+        }
+
+        /// <summary>
+        /// 移除字符串数组
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="arr_oldValue">为空则替换空格</param>
+        /// <returns></returns>
+        public static string TrimAny(this string source, params string[] arr_oldValue)
+        {
+            if (source == null)
+                return null;
+
+            if (arr_oldValue == null || arr_oldValue.Length == 0)
+                arr_oldValue = new string[1] { " " };
+
+            if (arr_oldValue?.Length > 0)
+            {
+                foreach (string oldValue in arr_oldValue)
+                    source = source.Replace(oldValue, string.Empty);
+            }
+
+            return source;
         }
 
         /// <summary>

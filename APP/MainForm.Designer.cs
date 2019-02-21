@@ -32,13 +32,14 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.btn_refresh = new System.Windows.Forms.Button();
             this.dgv_list = new System.Windows.Forms.DataGridView();
-            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pubDate_sub = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Link = new System.Windows.Forms.DataGridViewLinkColumn();
             this.btn_hide = new System.Windows.Forms.Button();
             this.notify = new System.Windows.Forms.NotifyIcon(this.components);
             this.cms_notify = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.exiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pubDate_sub = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Link = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.newsID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_list)).BeginInit();
             this.cms_notify.SuspendLayout();
             this.SuspendLayout();
@@ -65,41 +66,18 @@
             this.dgv_list.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Title,
             this.pubDate_sub,
-            this.Link});
+            this.Link,
+            this.newsID});
             this.dgv_list.Location = new System.Drawing.Point(12, 41);
             this.dgv_list.MultiSelect = false;
             this.dgv_list.Name = "dgv_list";
             this.dgv_list.ReadOnly = true;
             this.dgv_list.RowTemplate.Height = 23;
             this.dgv_list.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgv_list.Size = new System.Drawing.Size(460, 232);
+            this.dgv_list.Size = new System.Drawing.Size(460, 298);
             this.dgv_list.TabIndex = 1;
             this.dgv_list.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_list_CellClick);
             this.dgv_list.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_list_CellDoubleClick);
-            // 
-            // Title
-            // 
-            this.Title.HeaderText = "标题";
-            this.Title.MinimumWidth = 400;
-            this.Title.Name = "Title";
-            this.Title.ReadOnly = true;
-            this.Title.Width = 400;
-            // 
-            // pubDate_sub
-            // 
-            this.pubDate_sub.HeaderText = "发布时间";
-            this.pubDate_sub.MinimumWidth = 115;
-            this.pubDate_sub.Name = "pubDate_sub";
-            this.pubDate_sub.ReadOnly = true;
-            this.pubDate_sub.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.pubDate_sub.Width = 115;
-            // 
-            // Link
-            // 
-            this.Link.HeaderText = "链接";
-            this.Link.MinimumWidth = 100;
-            this.Link.Name = "Link";
-            this.Link.ReadOnly = true;
             // 
             // btn_hide
             // 
@@ -134,12 +112,45 @@
             this.exiteToolStripMenuItem.Text = "Exit(&e)";
             this.exiteToolStripMenuItem.Click += new System.EventHandler(this.exiteToolStripMenuItem_Click);
             // 
+            // Title
+            // 
+            this.Title.HeaderText = "标题";
+            this.Title.MinimumWidth = 400;
+            this.Title.Name = "Title";
+            this.Title.ReadOnly = true;
+            this.Title.Width = 400;
+            // 
+            // pubDate_sub
+            // 
+            this.pubDate_sub.HeaderText = "发布时间";
+            this.pubDate_sub.MinimumWidth = 115;
+            this.pubDate_sub.Name = "pubDate_sub";
+            this.pubDate_sub.ReadOnly = true;
+            this.pubDate_sub.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.pubDate_sub.Width = 115;
+            // 
+            // Link
+            // 
+            this.Link.HeaderText = "链接";
+            this.Link.MinimumWidth = 100;
+            this.Link.Name = "Link";
+            this.Link.ReadOnly = true;
+            // 
+            // newsID
+            // 
+            this.newsID.HeaderText = "文章Id";
+            this.newsID.MinimumWidth = 65;
+            this.newsID.Name = "newsID";
+            this.newsID.ReadOnly = true;
+            this.newsID.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.newsID.Width = 65;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btn_hide;
-            this.ClientSize = new System.Drawing.Size(484, 285);
+            this.ClientSize = new System.Drawing.Size(484, 351);
             this.Controls.Add(this.dgv_list);
             this.Controls.Add(this.btn_hide);
             this.Controls.Add(this.btn_refresh);
@@ -166,6 +177,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Title;
         private System.Windows.Forms.DataGridViewTextBoxColumn pubDate_sub;
         private System.Windows.Forms.DataGridViewLinkColumn Link;
+        private System.Windows.Forms.DataGridViewTextBoxColumn newsID;
     }
 }
 
