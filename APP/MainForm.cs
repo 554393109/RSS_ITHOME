@@ -22,8 +22,13 @@ namespace APP
         /// 启动参数
         /// </summary>
         private static string[] init_param = default(string[]);
-        private static bool isWAP = false;
-        private static bool isShowTip = true;
+        private static readonly object lock_isWAP = new object();
+        private static readonly object lock_isShowTip = new object();
+        private static bool _isWAP;
+        private static bool _isShowTip;
+        private static bool isWAP { get { lock (lock_isWAP) return _isWAP; } set { lock (lock_isWAP) _isWAP = value; } }
+        private static bool isShowTip { get { lock (lock_isShowTip) return _isShowTip; } set { lock (lock_isShowTip) _isShowTip = value; } }
+
 
         private const string baseUrl_WAP = "https://m.ithome.com/";
         private const string baseUrl_WEB = "https://www.ithome.com/";
@@ -39,16 +44,18 @@ namespace APP
         public MainForm(string[] arr_param)
         {
             init_param = arr_param ?? new string[0] { };
-            isWAP = init_param.Contains("/m", StringComparison.OrdinalIgnoreCase);
-            isShowTip = init_param.Contains("/tip", StringComparison.OrdinalIgnoreCase);
+            isWAP = !init_param.Contains("/web", StringComparison.OrdinalIgnoreCase);
+            isShowTip = !init_param.Contains("/notip", StringComparison.OrdinalIgnoreCase);
 
             InitializeComponent();
 
-            this.tsmi_isWap.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
-            this.tsmi_isShowTip.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
+            this.tsmi_isWap_0.CheckState = this.tsmi_isWap_1.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
+            this.tsmi_isShowTip_0.CheckState = this.tsmi_isShowTip_1.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
 
-            this.tsmi_isWap.Click += tsmi_isWap_Click;
-            this.tsmi_isShowTip.Click += tsmi_isShowTip_Click;
+            this.tsmi_isWap_0.Click += tsmi_isWap_Click;
+            this.tsmi_isWap_1.Click += tsmi_isWap_Click;
+            this.tsmi_isShowTip_0.Click += tsmi_isShowTip_Click;
+            this.tsmi_isShowTip_1.Click += tsmi_isShowTip_Click;
 
             handler = new SetDataHandler(SetData);
             timmer.Tick += timmer_Tick;
@@ -57,13 +64,13 @@ namespace APP
         private void tsmi_isWap_Click(object sender, EventArgs e)
         {
             isWAP = !isWAP;
-            this.tsmi_isWap.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
+            this.tsmi_isWap_0.CheckState = this.tsmi_isWap_1.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
         }
 
         private void tsmi_isShowTip_Click(object sender, EventArgs e)
         {
             isShowTip = !isShowTip;
-            this.tsmi_isShowTip.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
+            this.tsmi_isShowTip_0.CheckState = this.tsmi_isShowTip_1.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
