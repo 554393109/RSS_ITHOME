@@ -21,10 +21,7 @@ namespace APP
         [STAThread]
         static void Main(string[] arr_param)
         {
-            //Application.EnableVisualStyles();
-            //Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new MainForm(arr_param));
-
+#if DEBUG
             bool noExists;
             System.Threading.Mutex run = new System.Threading.Mutex(true, "single", out noExists);
 
@@ -42,6 +39,11 @@ namespace APP
             {
                 Application.Exit();
             }
+#else
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm(arr_param));
+#endif
         }
     }
 }
