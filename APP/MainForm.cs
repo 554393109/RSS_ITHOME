@@ -43,8 +43,27 @@ namespace APP
             isShowTip = init_param.Contains("/tip", StringComparison.OrdinalIgnoreCase);
 
             InitializeComponent();
+
+            this.tsmi_isWap.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
+            this.tsmi_isShowTip.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
+
+            this.tsmi_isWap.Click += tsmi_isWap_Click;
+            this.tsmi_isShowTip.Click += tsmi_isShowTip_Click;
+
             handler = new SetDataHandler(SetData);
-            timmer.Tick += Timmer_Tick;
+            timmer.Tick += timmer_Tick;
+        }
+
+        private void tsmi_isWap_Click(object sender, EventArgs e)
+        {
+            isWAP = !isWAP;
+            this.tsmi_isWap.CheckState = isWAP ? CheckState.Checked : CheckState.Unchecked;
+        }
+
+        private void tsmi_isShowTip_Click(object sender, EventArgs e)
+        {
+            isShowTip = !isShowTip;
+            this.tsmi_isShowTip.CheckState = isShowTip ? CheckState.Checked : CheckState.Unchecked;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -53,7 +72,7 @@ namespace APP
             GetRSS();
         }
 
-        private void Timmer_Tick(object sender, EventArgs e)
+        private void timmer_Tick(object sender, EventArgs e)
         {
             GetRSS();
         }
@@ -67,7 +86,7 @@ namespace APP
             }
         }
 
-        private void exiteToolStripMenuItem_Click(object sender, EventArgs e)
+        private void tsmi_Exit_Click(object sender, EventArgs e)
         {
             UnregisterHotKey(Handle, 201);
             Application.Exit();
@@ -90,7 +109,7 @@ namespace APP
 
                     if (_str_response_xml.IsNullOrWhiteSpace())
                     {
-                        MessageBox.Show("没有数据");
+                        //MessageBox.Show("没有数据");
                         if (this.InvokeRequired)
                         {
                             this.Invoke(handler, string.Format(_title, pubDate), null);
@@ -150,21 +169,23 @@ namespace APP
                 {
                     var item = enum_dgv.Current as XmlNode;
                     var title = item.SelectSingleNode("title").InnerText;
-                    var link = item.SelectSingleNode("link").InnerText;
+                    var link_WEB = item.SelectSingleNode("link").InnerText;
+                    var link_WAP = string.Empty;
                     var newsID = string.Empty;
-                    if (!link.IsNullOrWhiteSpace())
+
+                    if (!link_WEB.IsNullOrWhiteSpace())
                     {
-                        var arr = link.GetArray("/");
+                        var arr = link_WEB.GetArray("/");
                         if (arr.Length > 4)
                             newsID = "{0}{1}{2}".ToFormat(arr[arr.Length - 3], arr[arr.Length - 2], arr[arr.Length - 1]).TrimAny(".htm", ".html").TrimStart('0');
 
                         if (!newsID.IsNullOrWhiteSpace() && isWAP)
-                            link = "https://m.ithome.com/html/{0}.htm".ToFormat(newsID);
+                            link_WAP = "https://m.ithome.com/html/{0}.htm".ToFormat(newsID);
                     }
 
                     //var description = item.SelectSingleNode("description").InnerText;
                     var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
-                    this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link, newsID.ValueOrEmpty() });
+                    this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link_WEB.ValueOrEmpty(), link_WAP.ValueOrEmpty(), newsID.ValueOrEmpty() });
                 }
 
                 if (!this.ShowInTaskbar)
@@ -180,24 +201,13 @@ namespace APP
             this.btn_refresh.Enabled = true;
         }
 
-        private void dgv_list_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.ColumnIndex == 2)
-            {
-                var row = this.dgv_list[e.ColumnIndex, e.RowIndex];
-                var link = row.Value.ValueOrEmpty(isWAP ? "https://m.ithome.com/" : "https://www.ithome.com/");
-                System.Diagnostics.Process.Start(link);
-                Clipboard.SetText(link);
-            }
-        }
-
         private void dgv_list_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex > -1)
             {
-                var row = this.dgv_list["Link", e.RowIndex];
-                //var link = "https://www.ithome.com/rss";
-                var link = row.Value.ValueOrEmpty(isWAP ? "https://m.ithome.com/" : "https://www.ithome.com/");
+                var row_Link_WEB = this.dgv_list[columnName: "Link_WEB", rowIndex: e.RowIndex];
+                var row_Link_WAP = this.dgv_list[columnName: "Link_WAP", rowIndex: e.RowIndex];
+                var link = (isWAP ? row_Link_WAP.Value : row_Link_WEB.Value).ValueOrEmpty(isWAP ? "https://m.ithome.com/" : "https://www.ithome.com/");
                 System.Diagnostics.Process.Start(link);
                 Clipboard.SetText(link);
             }
@@ -208,7 +218,7 @@ namespace APP
             Show(false);
         }
 
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void notify_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             Show(true);
         }
@@ -324,6 +334,5 @@ namespace APP
         }
 
         #endregion 全局热键
-
     }
 }
