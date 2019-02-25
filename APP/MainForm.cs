@@ -26,20 +26,19 @@ namespace APP
         private static readonly object lock_isShowTip = new object();
         private static bool _isWAP;
         private static bool _isShowTip;
-        private static bool isWAP { get { lock (lock_isWAP) return _isWAP; } set { lock (lock_isWAP) _isWAP = value; } }
-        private static bool isShowTip { get { lock (lock_isShowTip) return _isShowTip; } set { lock (lock_isShowTip) _isShowTip = value; } }
-
-
         private const string baseUrl_WAP = "https://m.ithome.com/";
         private const string baseUrl_WEB = "https://www.ithome.com/";
         private static string urlRSS = baseUrl_WEB + "rss/";
-
-        private const string _title = "更新时间：{0}";
+        private const string _form_title = "更新时间：{0}";
         private static string str_response_xml = string.Empty;
+        private static string str_last_title = string.Empty;                                        // 最新文章标题
         private static string pubDate = string.Empty;
-        private Timer timmer = new Timer() { Interval = 1000 * 30, Enabled = true };
+        private Timer timmer = null;
         private delegate void SetDataHandler(string str_Text, IEnumerator enum_dgv);
         private SetDataHandler handler = null;
+
+        private static bool isWAP { get { lock (lock_isWAP) return _isWAP; } set { lock (lock_isWAP) _isWAP = value; } }
+        private static bool isShowTip { get { lock (lock_isShowTip) return _isShowTip; } set { lock (lock_isShowTip) _isShowTip = value; } }
 
         public MainForm(string[] arr_param)
         {
@@ -58,6 +57,7 @@ namespace APP
             this.tsmi_isShowTip_1.Click += tsmi_isShowTip_Click;
 
             handler = new SetDataHandler(SetData);
+            timmer = new Timer() { Interval = 1000 * 30, Enabled = true };
             timmer.Tick += timmer_Tick;
         }
 
@@ -107,61 +107,37 @@ namespace APP
 
         private void GetRSS()
         {
+#if RELEASE
             Task.Run(() => {
-                var _clientContext = new ClientContext(new CommonClient());
-                try
+#endif
+            var _clientContext = new ClientContext(new CommonClient());
+            try
+            {
+                var _str_response_xml = _clientContext.Post(urlRSS, null);
+                var ienum = default(IEnumerator);
+                if (!_str_response_xml.IsNullOrWhiteSpace()
+                && !str_response_xml.Equals(_str_response_xml, StringComparison.OrdinalIgnoreCase))
                 {
-                    var _str_response_xml = _clientContext.Post(urlRSS, null);
-                    pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
-
-                    if (_str_response_xml.IsNullOrWhiteSpace())
-                    {
-                        //MessageBox.Show("没有数据");
-                        if (this.InvokeRequired)
-                        {
-                            this.Invoke(handler, string.Format(_title, pubDate), null);
-                        }
-                        else
-                        {
-                            this.SetData(string.Format(_title, pubDate), null);
-                        }
-                        return;
-                    }
-
-                    if (str_response_xml.Length == _str_response_xml.Length
-                        || str_response_xml.Equals(_str_response_xml, StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (this.InvokeRequired)
-                        {
-                            this.Invoke(handler, string.Format(_title, pubDate), null);
-                        }
-                        else
-                        {
-                            this.SetData(string.Format(_title, pubDate), null);
-                        }
-                        return;
-                    }
-
                     str_response_xml = _str_response_xml;
                     var xmlDoc = new XmlDocument();
                     xmlDoc.LoadXml(str_response_xml);
-                    pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(xmlDoc.SelectNodes("rss/channel/pubDate")[0].InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
-                    IEnumerator ienum = xmlDoc.SelectNodes("rss/channel/item").GetEnumerator();
+                    //pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(xmlDoc.SelectNodes("rss/channel/pubDate")[0].InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                    ienum = xmlDoc.SelectNodes("rss/channel/item").GetEnumerator();
+                }
 
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(handler, string.Format(_title, pubDate), ienum);
-                    }
-                    else
-                    {
-                        this.SetData(string.Format(_title, pubDate), ienum);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //MessageBox.Show(ex.Message);
-                }
+                pubDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
+                if (this.InvokeRequired)
+                    this.Invoke(handler, string.Format(_form_title, pubDate), ienum);
+                else
+                    this.SetData(string.Format(_form_title, pubDate), ienum);
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show(ex.Message);
+            }
+#if RELEASE
             });
+#endif
         }
 
         private void SetData(string str_Text, IEnumerator enum_dgv)
@@ -172,6 +148,7 @@ namespace APP
             if (enum_dgv != null)
             {
                 this.dgv_list.Rows.Clear();
+                var _str_last_title = string.Empty;
                 while (enum_dgv.MoveNext())
                 {
                     var item = enum_dgv.Current as XmlNode;
@@ -179,6 +156,9 @@ namespace APP
                     var link_WEB = item.SelectSingleNode("link").InnerText;
                     var link_WAP = string.Empty;
                     var newsID = string.Empty;
+
+                    if ("link".Equals(item.PreviousSibling.Name, StringComparison.OrdinalIgnoreCase))
+                        _str_last_title = title;
 
                     if (!link_WEB.IsNullOrWhiteSpace())
                     {
@@ -191,17 +171,22 @@ namespace APP
                     }
 
                     //var description = item.SelectSingleNode("description").InnerText;
-                    var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", Globals.ConvertStringToDateTime(item.SelectSingleNode("pubDate").InnerText, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                    var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", item.SelectSingleNode("pubDate").InnerText.ToDateTime(DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link_WEB.ValueOrEmpty(), link_WAP.ValueOrEmpty(), newsID.ValueOrEmpty() });
                 }
 
-                if (!this.ShowInTaskbar)
+                if (!str_last_title.IsNullOrWhiteSpace() && !str_last_title.Equals(_str_last_title, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (isShowTip)
-                        this.notify.ShowBalloonTip(200, "有新内容", str_Text, ToolTipIcon.None);
+                    str_last_title = _str_last_title;
 
-                    this.Text = "【有新内容】" + str_Text;
-                    this.notify.Text = this.Text;
+                    if (!this.ShowInTaskbar)
+                    {
+                        if (isShowTip)
+                            this.notify.ShowBalloonTip(200, "有新内容", str_Text, ToolTipIcon.None);
+
+                        this.Text = "【有新内容】" + str_Text;
+                        this.notify.Text = this.Text;
+                    }
                 }
             }
 
@@ -234,8 +219,15 @@ namespace APP
         {
             if (show)
             {
+                if (this.ShowInTaskbar)
+                {
+                    this.Activate();
+                }
+                else
+                {
+                    this.ShowInTaskbar = true;
+                }
                 this.WindowState = FormWindowState.Normal;
-                this.ShowInTaskbar = true;
             }
             else
             {
@@ -246,6 +238,7 @@ namespace APP
                 this.notify.Text = this.Text;
             }
 
+            UnRegKey(Handle, 201);
             RegKey(Handle, 201, KeyModifiers.Ctrl, Keys.Tab);
         }
 
@@ -341,5 +334,10 @@ namespace APP
         }
 
         #endregion 全局热键
+
+        private void tscb_refresh_ts_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

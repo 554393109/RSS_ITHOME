@@ -81,8 +81,8 @@
     <Compile Include="Utility\Extension\ObjectExtensions.cs" />
     <Compile Include="Utility\Extension\StringExtension.cs" />
     <Compile Include="Utility\FileItem.cs" />
-    <Compile Include="Utility\HttpClientUtils\ClientContext.cs" />
     <Compile Include="Utility\Globals.cs" />
+    <Compile Include="Utility\HttpClientUtils\ClientContext.cs" />
     <Compile Include="Utility\HttpClientUtils\Interface\IClient.cs" />
     <Compile Include="Utility\HttpClientUtils\Interface\IClientStrategy.cs" />
     <Compile Include="Utility\LogHelper.cs" />

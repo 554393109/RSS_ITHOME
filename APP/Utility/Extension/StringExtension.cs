@@ -156,79 +156,6 @@ namespace APP.Utility.Extension
             return encoding.GetBytes(value).Length;
         }
 
-        public static int ToInt32(this string value)
-        {
-            return Convert.ToInt32(value);
-        }
-
-        public static long ToInt64(this string value)
-        {
-            return Convert.ToInt64(value);
-        }
-
-        public static bool ToBoolean(this string value)
-        {
-            return Convert.ToBoolean(value);
-        }
-
-        public static T ToEnum<T>(this string value)
-        {
-            var @enum = (T)Enum.Parse(typeof(T), value, true);
-            return @enum;
-        }
-
-        public static bool ToTryEnum<T>(this string value, out T result)
-            where T : struct
-        {
-            var success = Enum.TryParse<T>(value, true, out result);
-            return success;
-        }
-
-
-
-        /// <summary>
-        /// 半角转全角(SBC case)
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static string ToSBC(this string value)
-        {
-            //半角转全角：
-            char[] c = value.ToCharArray();
-            for (int i = 0; i < c.Length; i++)
-            {
-                if (c[i] == 32)
-                {
-                    c[i] = (char)12288;
-                    continue;
-                }
-                if (c[i] < 127)
-                    c[i] = (char)(c[i] + 65248);
-            }
-            return new string(c);
-        }
-
-        /// <summary>
-        ///  全角转半角
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static string ToDBC(this string value)
-        {
-            char[] c = value.ToCharArray();
-            for (int i = 0; i < c.Length; i++)
-            {
-                if (c[i] == 12288)
-                {
-                    c[i] = (char)32;
-                    continue;
-                }
-                if (c[i] > 65280 && c[i] < 65375)
-                    c[i] = (char)(c[i] - 65248);
-            }
-            return new string(c);
-        }
-
 
 
 
@@ -259,8 +186,6 @@ namespace APP.Utility.Extension
         /// <returns></returns>
         public static string[] GetArray(this string value, string separator, StringSplitOptions options = StringSplitOptions.RemoveEmptyEntries)
         {
-            if (value.IsNullOrWhiteSpace())
-                return new string[0] { };
             return value.Split(new string[] { separator }, options);
         }
 
@@ -301,6 +226,20 @@ namespace APP.Utility.Extension
             return new Regex(@"\\u([0-9A-F]{4})", RegexOptions.IgnoreCase | RegexOptions.Compiled).Replace(source, x => string.Empty + Convert.ToChar(Convert.ToUInt16(x.Result("$1"), 16)));
         }
 
+        public static byte[] HexStrToByte(this string source)
+        {
+            source = source.Replace(" ", "");
+            if ((source.Length % 2) != 0)
+                source += " ";
+            byte[] returnBytes = new byte[source.Length / 2];
+            for (int i = 0; i < returnBytes.Length; i++)
+                returnBytes[i] = Convert.ToByte(source.Substring(i * 2, 2), 16);
+            return returnBytes;
+        }
+
+
+
+
         /// <summary>
         /// <para>将 URL 中的参数名称/值编码为合法的格式。</para>
         /// <para>可以解决类似这样的问题：假设参数名为 tvshow, 参数值为 Tom&Jerry，如果不编码，可能得到的网址： http://a.com/?tvshow=Tom&Jerry&year=1965 编码后则为：http://a.com/?tvshow=Tom%26Jerry&year=1965 </para>
@@ -324,46 +263,37 @@ namespace APP.Utility.Extension
             return Uri.UnescapeDataString(source);
         }
 
-        public static byte[] HexStrToByte(this string source)
+        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlEscape()方法")]
+        public static string UrlEncode(this string url)
         {
-            source = source.Replace(" ", "");
-            if ((source.Length % 2) != 0)
-                source += " ";
-            byte[] returnBytes = new byte[source.Length / 2];
-            for (int i = 0; i < returnBytes.Length; i++)
-                returnBytes[i] = Convert.ToByte(source.Substring(i * 2, 2), 16);
-            return returnBytes;
+            return UrlEncode(url, Encoding.UTF8);
         }
 
-        //        /// <summary>
-        //        /// 封装System.Web.HttpUtility.UrlEncode
-        //        /// </summary>
-        //        /// <param name="url"></param>
-        //        /// <returns></returns>
-        //#if DEBUG
-        //        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlEscape()方法")]
-        //#endif
-        //        public static string UrlEncode(this string url)
-        //        {
-        //            if (url == null)
-        //                return string.Empty;
+        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlEscape()方法")]
+        public static string UrlEncode(this string url, Encoding encoding)
+        {
+            if (url == null)
+                return string.Empty;
 
-        //            return System.Web.HttpUtility.UrlEncode(url);
-        //        }
+            return System.Web.HttpUtility.UrlEncode(str: url, e: encoding);
+        }
+
+        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlUnescape()方法")]
+        public static string UrlDecode(this string url)
+        {
+            return UrlDecode(url, Encoding.UTF8);
+        }
+
+        [Obsolete("此方法已过期，建议使用CySoft.Utility.StringExtension.UrlUnescape()方法")]
+        public static string UrlDecode(this string url, Encoding encoding)
+        {
+            if (url == null)
+                return string.Empty;
+
+            return System.Web.HttpUtility.UrlDecode(str: url, e: encoding);
+        }
 
 
-        ///// <summary>
-        ///// 封装System.Web.HttpUtility.UrlDecode
-        ///// </summary>
-        ///// <param name="url"></param>
-        ///// <returns></returns>
-        //public static string UrlDecode(this string url)
-        //{
-        //    if (url == null)
-        //        return string.Empty;
-
-        //    return System.Web.HttpUtility.UrlDecode(url);
-        //}
 
         /// <summary>
         /// 移除字符串

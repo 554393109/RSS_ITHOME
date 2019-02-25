@@ -1,6 +1,6 @@
 ﻿/************************************************************************
  * 文件标识：  41788caa-8d4c-4e9d-a1c7-ceab30e893ec
- * 项目名称：  APP.Utility.Extension  
+ * 项目名称：  CySoft.Utility.Extension  
  * 项目描述：  
  * 类 名 称：  ObjectExtensions
  * 版 本 号：  v1.0.0.0 
@@ -185,17 +185,186 @@ namespace APP.Utility.Extension
 
         #region 类型转换
 
-        public static bool ToBoolean(this object obj)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static bool ToBool(this object value, bool defaultvalue = false)
         {
-            if (obj == null)
-                return false;
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
 
-            bool result = false;
-            bool.TryParse(obj.ToString(), out result);
+            bool result;
+            if (bool.TryParse(value.ToString(), out result))
+                return result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static int ToInt32(this object value, int defaultvalue = 0)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
+
+            int result;
+            if (int.TryParse(value.ToString(), out result))
+                return result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static long ToInt64(this object value, long defaultvalue = 0L)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
+
+            long result;
+            if (long.TryParse(value.ToString(), out result))
+                return result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static double ToDouble(this object value, double defaultvalue = 0.00)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
+
+            double result;
+            if (double.TryParse(value.ToString(), out result))
+                return result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static decimal ToDecimal(this object value, decimal defaultvalue = 0.00M)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
+
+            decimal result;
+            if (decimal.TryParse(value.ToString(), out result))
+                return result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static DateTime ToDateTime(this object value, string defaultvalue = "1900-01-01 00:00:00.000")
+        {
+            if (!defaultvalue.IsDateTime())
+                defaultvalue = "1900-01-01 00:00:00.000";
+
+            if (value.IsNullOrWhiteSpace())
+                return DateTime.Parse(defaultvalue);
+
+            DateTime result;
+            if (DateTime.TryParse(value.ToString(), out result))
+                return result;
+
+            return DateTime.Parse(defaultvalue);
+        }
+
+        public static T ToEnum<T>(this object value)
+        {
+            var result = (T)Enum.Parse(typeof(T), value.ValueOrEmpty(), true);
             return result;
         }
 
+        public static bool ToTryEnum<T>(this object value, out T result)
+            where T : struct
+        {
+            var success = Enum.TryParse<T>(value.ValueOrEmpty(), true, out result);
+            return success;
+        }
+
         #endregion 类型转换
+
+        #region 值处理
+
+        /// <summary>
+        /// 半角转全角(SBC case)
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToSBC(this object value)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return string.Empty;
+
+            //半角转全角：
+            var c = value.ToString().ToCharArray();
+            for (int i = 0; i < c.Length; i++)
+            {
+                if (c[i] == 32)
+                {
+                    c[i] = (char)12288;
+                    continue;
+                }
+
+                if (c[i] < 127)
+                    c[i] = (char)(c[i] + 65248);
+            }
+            return new string(c);
+        }
+
+        /// <summary>
+        ///  全角转半角
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToDBC(this object value)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return string.Empty;
+
+            var c = value.ToString().ToCharArray();
+            for (int i = 0; i < c.Length; i++)
+            {
+                if (c[i] == 12288)
+                {
+                    c[i] = (char)32;
+                    continue;
+                }
+
+                if (c[i] > 65280 && c[i] < 65375)
+                    c[i] = (char)(c[i] - 65248);
+            }
+            return new string(c);
+        }
+
+        #endregion 值处理
 
         /// <summary>
         /// 为null时使用string.Empty

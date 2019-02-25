@@ -1,97 +1,87 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using APP.Utility.Extension;
 
 namespace APP.Utility.HttpClientUtils
 {
     public class WebCommon
     {
-        public static string BuildHash(IDictionary parameters, bool urlencode = true)
+        public static string BuildHash(IDictionary parameters, bool needEncode = true)
         {
             string str_param = string.Empty;
             if (parameters != null && parameters.Count > 0)
             {
-                Dictionary<string, string> parameters_temp = new Dictionary<string, string>();
+                var parameters_temp = new Dictionary<string, string>();
                 foreach (DictionaryEntry item in parameters)
-                    parameters_temp.Add((string)item.Key, (string)item.Value);
+                    parameters_temp.Add(item.Key?.ToString(), item.Value?.ToString() ?? string.Empty);
 
-                str_param = _BuildHash(parameters: (IDictionary<string, string>)parameters_temp, encode: urlencode);
+                str_param = _BuildHash(parameters: parameters_temp, needEncode: needEncode);
             }
             return str_param;
         }
 
-        private static string _BuildHash(IDictionary<string, string> parameters, bool encode)
+        private static string _BuildHash(IDictionary<string, string> parameters, bool needEncode)
         {
-            StringBuilder postData = new StringBuilder();
-            bool hasParam = false;
+            StringBuilder builder = new StringBuilder();
 
-            IEnumerator<KeyValuePair<string, string>> dem = parameters.GetEnumerator();
-
-            while (dem.MoveNext())
+            var enumerator = parameters.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                string name = dem.Current.Key;
-                string value = dem.Current.Value;
+                string key = enumerator.Current.Key;
+                string val = enumerator.Current.Value;
 
                 // 忽略参数名或参数值为空的参数
-                if (!string.IsNullOrWhiteSpace(name)
-                    || !string.IsNullOrWhiteSpace(value))
-                {
-                    if (hasParam)
-                        postData.Append("&");
+                if (key.IsNullOrWhiteSpace() || val.IsNullOrWhiteSpace())
+                    continue;
 
-                    postData.Append(name);
-                    postData.Append("=");
-
-                    if (encode)
-                        postData.Append(Globals.UrlEncode(value));
-                    else
-                        postData.Append(value);
-
-                    hasParam = true;
-                }
+                if (needEncode)
+                    builder.Append("&").Append(key).Append("=").Append(Uri.EscapeDataString(val));
+                else
+                    builder.Append("&").Append(key).Append("=").Append(val);
             }
-            return postData.ToString();
+            return builder.ToString().TrimStart('&');
         }
-
-
-
 
         public static string BuildXml(IDictionary parameters)
         {
             string str_param = null;
             if (parameters != null && parameters.Count > 0)
             {
-                Dictionary<string, string> parameters_temp = new Dictionary<string, string>();
+                var parameters_temp = new Dictionary<string, string>();
                 foreach (DictionaryEntry item in parameters)
-                    parameters_temp.Add((string)item.Key, (string)item.Value);
+                    parameters_temp.Add(item.Key?.ToString(), item.Value?.ToString() ?? string.Empty);
 
-                str_param = _BuildXml(parameters: (IDictionary<string, string>)parameters_temp);
+                str_param = _BuildXml(parameters: parameters_temp);
             }
+
             return str_param;
         }
 
         private static string _BuildXml(IDictionary<string, string> parameters)
         {
-            StringBuilder postData = new StringBuilder();
-            IEnumerator<KeyValuePair<string, string>> dem = parameters.GetEnumerator();
-            postData.Append("<xml>");
-            while (dem.MoveNext())
+            var builder = new StringBuilder();
+            var enumerator = parameters.GetEnumerator();
+
+            builder.Append("<xml>");
+            while (enumerator.MoveNext())
             {
-                string name = dem.Current.Key;
-                string value = dem.Current.Value;
+                var key = enumerator.Current.Key;
+                var val = enumerator.Current.Value;
 
                 // 忽略参数名或参数值为空的参数
-                if (!string.IsNullOrWhiteSpace(name)
-                    || !string.IsNullOrWhiteSpace(value))
-                {
-                    postData.Append("<").Append(name).Append(">");
-                    //postData.Append(Globals.UrlEncode(value));
-                    postData.Append(value);
-                    postData.Append("</").Append(name).Append(">");
-                }
+                if (key.IsNullOrWhiteSpace() || val.IsNullOrWhiteSpace())
+                    continue;
+
+                builder.Append("<").Append(key).Append(">");
+                //builder.Append(Globals.UrlEscape(val));
+                builder.Append(val);
+                builder.Append("</").Append(key).Append(">");
             }
-            postData.Append("</xml>");
-            return postData.ToString();
+            builder.Append("</xml>");
+
+            return builder.ToString();
         }
     }
 }

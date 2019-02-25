@@ -210,24 +210,24 @@
             // tsmi_isWap_0
             // 
             this.tsmi_isWap_0.Name = "tsmi_isWap_0";
-            this.tsmi_isWap_0.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_isWap_0.Size = new System.Drawing.Size(181, 22);
             this.tsmi_isWap_0.Text = "WAP版(&w)";
             // 
             // tsmi_isShowTip_0
             // 
             this.tsmi_isShowTip_0.Name = "tsmi_isShowTip_0";
-            this.tsmi_isShowTip_0.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_isShowTip_0.Size = new System.Drawing.Size(181, 22);
             this.tsmi_isShowTip_0.Text = "更新提示(&t)";
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(121, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(178, 6);
             // 
             // tsmi_Exit_0
             // 
             this.tsmi_Exit_0.Name = "tsmi_Exit_0";
-            this.tsmi_Exit_0.Size = new System.Drawing.Size(124, 22);
+            this.tsmi_Exit_0.Size = new System.Drawing.Size(181, 22);
             this.tsmi_Exit_0.Text = "退出(&e)";
             this.tsmi_Exit_0.Click += new System.EventHandler(this.tsmi_Exit_Click);
             // 
