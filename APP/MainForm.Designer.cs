@@ -32,6 +32,11 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.btn_refresh = new System.Windows.Forms.Button();
             this.dgv_list = new System.Windows.Forms.DataGridView();
+            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pubDate_sub = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Link_WEB = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.Link_WAP = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.newsID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btn_hide = new System.Windows.Forms.Button();
             this.notify = new System.Windows.Forms.NotifyIcon(this.components);
             this.cms_notify = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -45,11 +50,6 @@
             this.tsmi_isShowTip_0 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmi_Exit_0 = new System.Windows.Forms.ToolStripMenuItem();
-            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pubDate_sub = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Link_WEB = new System.Windows.Forms.DataGridViewLinkColumn();
-            this.Link_WAP = new System.Windows.Forms.DataGridViewLinkColumn();
-            this.newsID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_list)).BeginInit();
             this.cms_notify.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -89,104 +89,6 @@
             this.dgv_list.Size = new System.Drawing.Size(575, 320);
             this.dgv_list.TabIndex = 1;
             this.dgv_list.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_list_CellDoubleClick);
-            // 
-            // btn_hide
-            // 
-            this.btn_hide.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_hide.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btn_hide.Location = new System.Drawing.Point(512, 27);
-            this.btn_hide.Name = "btn_hide";
-            this.btn_hide.Size = new System.Drawing.Size(75, 23);
-            this.btn_hide.TabIndex = 0;
-            this.btn_hide.Text = "关闭";
-            this.btn_hide.UseVisualStyleBackColor = true;
-            this.btn_hide.Click += new System.EventHandler(this.btn_hide_Click);
-            // 
-            // notify
-            // 
-            this.notify.ContextMenuStrip = this.cms_notify;
-            this.notify.Icon = ((System.Drawing.Icon)(resources.GetObject("notify.Icon")));
-            this.notify.Visible = true;
-            this.notify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notify_MouseDoubleClick);
-            // 
-            // cms_notify
-            // 
-            this.cms_notify.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmi_isWap_1,
-            this.tsmi_isShowTip_1,
-            this.toolStripSeparator2,
-            this.tsmi_Exit_1});
-            this.cms_notify.Name = "cms_notify";
-            this.cms_notify.Size = new System.Drawing.Size(125, 76);
-            // 
-            // tsmi_isWap_1
-            // 
-            this.tsmi_isWap_1.Name = "tsmi_isWap_1";
-            this.tsmi_isWap_1.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_isWap_1.Text = "WAP版";
-            // 
-            // tsmi_isShowTip_1
-            // 
-            this.tsmi_isShowTip_1.Name = "tsmi_isShowTip_1";
-            this.tsmi_isShowTip_1.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_isShowTip_1.Text = "更新提示";
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(121, 6);
-            // 
-            // tsmi_Exit_1
-            // 
-            this.tsmi_Exit_1.Name = "tsmi_Exit_1";
-            this.tsmi_Exit_1.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_Exit_1.Text = "退出(&e)";
-            this.tsmi_Exit_1.Click += new System.EventHandler(this.tsmi_Exit_Click);
-            // 
-            // menuStrip1
-            // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmi_Setting});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(599, 25);
-            this.menuStrip1.TabIndex = 2;
-            this.menuStrip1.Text = "menuStrip1";
-            // 
-            // tsmi_Setting
-            // 
-            this.tsmi_Setting.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmi_isWap_0,
-            this.tsmi_isShowTip_0,
-            this.toolStripSeparator1,
-            this.tsmi_Exit_0});
-            this.tsmi_Setting.Name = "tsmi_Setting";
-            this.tsmi_Setting.Size = new System.Drawing.Size(58, 21);
-            this.tsmi_Setting.Text = "设置(&s)";
-            // 
-            // tsmi_isWap_0
-            // 
-            this.tsmi_isWap_0.Name = "tsmi_isWap_0";
-            this.tsmi_isWap_0.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_isWap_0.Text = "WAP版";
-            // 
-            // tsmi_isShowTip_0
-            // 
-            this.tsmi_isShowTip_0.Name = "tsmi_isShowTip_0";
-            this.tsmi_isShowTip_0.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_isShowTip_0.Text = "更新提示";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(121, 6);
-            // 
-            // tsmi_Exit_0
-            // 
-            this.tsmi_Exit_0.Name = "tsmi_Exit_0";
-            this.tsmi_Exit_0.Size = new System.Drawing.Size(124, 22);
-            this.tsmi_Exit_0.Text = "退出(&e)";
-            this.tsmi_Exit_0.Click += new System.EventHandler(this.tsmi_Exit_Click);
             // 
             // Title
             // 
@@ -230,6 +132,104 @@
             this.newsID.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.newsID.Visible = false;
             this.newsID.Width = 65;
+            // 
+            // btn_hide
+            // 
+            this.btn_hide.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_hide.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btn_hide.Location = new System.Drawing.Point(512, 27);
+            this.btn_hide.Name = "btn_hide";
+            this.btn_hide.Size = new System.Drawing.Size(75, 23);
+            this.btn_hide.TabIndex = 0;
+            this.btn_hide.Text = "关闭";
+            this.btn_hide.UseVisualStyleBackColor = true;
+            this.btn_hide.Click += new System.EventHandler(this.btn_hide_Click);
+            // 
+            // notify
+            // 
+            this.notify.ContextMenuStrip = this.cms_notify;
+            this.notify.Icon = ((System.Drawing.Icon)(resources.GetObject("notify.Icon")));
+            this.notify.Visible = true;
+            this.notify.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notify_MouseDoubleClick);
+            // 
+            // cms_notify
+            // 
+            this.cms_notify.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_isWap_1,
+            this.tsmi_isShowTip_1,
+            this.toolStripSeparator2,
+            this.tsmi_Exit_1});
+            this.cms_notify.Name = "cms_notify";
+            this.cms_notify.Size = new System.Drawing.Size(137, 76);
+            // 
+            // tsmi_isWap_1
+            // 
+            this.tsmi_isWap_1.Name = "tsmi_isWap_1";
+            this.tsmi_isWap_1.Size = new System.Drawing.Size(136, 22);
+            this.tsmi_isWap_1.Text = "WAP版(&w)";
+            // 
+            // tsmi_isShowTip_1
+            // 
+            this.tsmi_isShowTip_1.Name = "tsmi_isShowTip_1";
+            this.tsmi_isShowTip_1.Size = new System.Drawing.Size(136, 22);
+            this.tsmi_isShowTip_1.Text = "更新提示(&t)";
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(133, 6);
+            // 
+            // tsmi_Exit_1
+            // 
+            this.tsmi_Exit_1.Name = "tsmi_Exit_1";
+            this.tsmi_Exit_1.Size = new System.Drawing.Size(136, 22);
+            this.tsmi_Exit_1.Text = "退出(&e)";
+            this.tsmi_Exit_1.Click += new System.EventHandler(this.tsmi_Exit_Click);
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_Setting});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(599, 25);
+            this.menuStrip1.TabIndex = 2;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // tsmi_Setting
+            // 
+            this.tsmi_Setting.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_isWap_0,
+            this.tsmi_isShowTip_0,
+            this.toolStripSeparator1,
+            this.tsmi_Exit_0});
+            this.tsmi_Setting.Name = "tsmi_Setting";
+            this.tsmi_Setting.Size = new System.Drawing.Size(58, 21);
+            this.tsmi_Setting.Text = "设置(&s)";
+            // 
+            // tsmi_isWap_0
+            // 
+            this.tsmi_isWap_0.Name = "tsmi_isWap_0";
+            this.tsmi_isWap_0.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_isWap_0.Text = "WAP版(&w)";
+            // 
+            // tsmi_isShowTip_0
+            // 
+            this.tsmi_isShowTip_0.Name = "tsmi_isShowTip_0";
+            this.tsmi_isShowTip_0.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_isShowTip_0.Text = "更新提示(&t)";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(121, 6);
+            // 
+            // tsmi_Exit_0
+            // 
+            this.tsmi_Exit_0.Name = "tsmi_Exit_0";
+            this.tsmi_Exit_0.Size = new System.Drawing.Size(124, 22);
+            this.tsmi_Exit_0.Text = "退出(&e)";
+            this.tsmi_Exit_0.Click += new System.EventHandler(this.tsmi_Exit_Click);
             // 
             // MainForm
             // 
