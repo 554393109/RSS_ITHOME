@@ -198,9 +198,9 @@ namespace APP
                 if (!this.ShowInTaskbar)
                 {
                     if (isShowTip)
-                        this.notify.ShowBalloonTip(500, "有新文章", str_Text, ToolTipIcon.None);
+                        this.notify.ShowBalloonTip(200, "有新内容", str_Text, ToolTipIcon.None);
 
-                    this.Text = "【有新文章】" + str_Text;
+                    this.Text = "【有新内容】" + str_Text;
                     this.notify.Text = this.Text;
                 }
             }
