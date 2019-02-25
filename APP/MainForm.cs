@@ -107,7 +107,7 @@ namespace APP
 
         private void GetRSS()
         {
-#if RELEASE
+#if !DEBUG
             Task.Run(() => {
 #endif
             var _clientContext = new ClientContext(new CommonClient());
@@ -135,7 +135,7 @@ namespace APP
             {
                 //MessageBox.Show(ex.Message);
             }
-#if RELEASE
+#if !DEBUG
             });
 #endif
         }
@@ -175,7 +175,7 @@ namespace APP
                     this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link_WEB.ValueOrEmpty(), link_WAP.ValueOrEmpty(), newsID.ValueOrEmpty() });
                 }
 
-                if (!str_last_title.IsNullOrWhiteSpace() && !str_last_title.Equals(_str_last_title, StringComparison.OrdinalIgnoreCase))
+                if (!str_last_title.Equals(_str_last_title, StringComparison.OrdinalIgnoreCase))
                 {
                     str_last_title = _str_last_title;
 
