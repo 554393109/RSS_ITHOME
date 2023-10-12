@@ -1,16 +1,10 @@
-﻿using System.Text;
-
-namespace APP.Utility.HttpClientUtils
+﻿namespace APP.Utility.HttpClientUtils
 {
+    using System.Text;
+
     public interface IClientStrategy
         : APP.Utility.HttpClientUtils.IClient
     {
-        ///// <summary>
-        ///// 请求超时
-        ///// 单位：秒
-        ///// </summary>
-        //int Timeout { get; set; }
-
         /// <summary>
         /// 内容编码
         /// 默认UTF-8
@@ -22,8 +16,5 @@ namespace APP.Utility.HttpClientUtils
         /// 默认hash
         /// </summary>
         string Format { get; set; }
-
-
-        //HttpClient Client { get; set; }
     }
 }

@@ -1,9 +1,10 @@
-﻿using System;
-using System.Net.Http;
-using System.Text;
-
-namespace APP.Utility.HttpClientUtils
+﻿namespace APP.Utility.HttpClientUtils
 {
+    using System;
+    using System.Net;
+    using System.Net.Http;
+    using System.Text;
+
     /// <summary>
     /// Common无证书策略Client
     /// 在当前类中保存该业务的HttpClient
@@ -11,43 +12,39 @@ namespace APP.Utility.HttpClientUtils
     public sealed class CommonClient
         : APP.Utility.HttpClientUtils.BaseClient
     {
-        private static readonly object lockHelper_CommonClient = new object();
-        private static volatile HttpClient httpClient_CommonClient = null;
-        private const int Timeout = 15;
+        private const int timeout = 10_000;
+        private static volatile HttpClient httpClient = null;
 
         public CommonClient()
         {
-            this.Get_ClientInstance();
-            base.Client = httpClient_CommonClient;
+            base.Timeout = timeout;
+            base.Client = httpClient;
         }
 
-        public CommonClient(string format)
-            : this()
+        public CommonClient(string format, Encoding charset, string contentType) : this()
         {
             base.Format = format;
-        }
-
-        public CommonClient(string format, Encoding charset)
-            : this(format)
-        {
             base.Charset = charset;
+            base.ContentType = contentType;
         }
 
-        private void Get_ClientInstance()
+        static CommonClient()
         {
-            if (httpClient_CommonClient == null)
+            if (httpClient == null)
             {
-                lock (lockHelper_CommonClient)
+                var handler = new WebRequestHandler
                 {
-                    if (httpClient_CommonClient == null)
-                    {
-                        httpClient_CommonClient = new HttpClient();
-                        httpClient_CommonClient.Timeout = new TimeSpan(0, 0, Timeout);
-                        httpClient_CommonClient.DefaultRequestHeaders.Add("KeepAlive", "false");
-                        httpClient_CommonClient.DefaultRequestHeaders.Add("User-Agent", "YZQ");
-                        httpClient_CommonClient.DefaultRequestHeaders.Add("DNT", "1");
-                    }
-                }
+                    UseProxy = false,
+                    Proxy = null,
+                    UseCookies = false,
+                    AutomaticDecompression = DecompressionMethods.None
+                };
+
+                httpClient = new HttpClient(handler);
+                httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+                httpClient.DefaultRequestHeaders.Add("KeepAlive", "false");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "YZQ");
+                httpClient.DefaultRequestHeaders.Add("DNT", "1");
             }
         }
     }

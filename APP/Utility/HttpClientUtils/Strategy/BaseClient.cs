@@ -1,24 +1,26 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace APP.Utility.HttpClientUtils
+﻿namespace APP.Utility.HttpClientUtils
 {
-    /// <summary>
-    /// 抽象HttpClient
-    /// </summary>
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using APP.Utility.Extension;
+
     public abstract class BaseClient
         : APP.Utility.HttpClientUtils.IClientStrategy
     {
         private Encoding _charset;
         private string _format;
+        private string _contenttype;
+
+        public int Timeout { get; protected set; } = 15_000;
 
         /// <summary>
         /// 内容编码
@@ -27,7 +29,7 @@ namespace APP.Utility.HttpClientUtils
         public Encoding Charset
         {
             get { return this._charset ?? Encoding.UTF8; }
-            set { this._charset = value; }
+            set { if (null != value) this._charset = value; }
         }
 
         /// <summary>
@@ -36,153 +38,283 @@ namespace APP.Utility.HttpClientUtils
         /// </summary>
         public string Format
         {
-            get { return this._format ?? "hash"; }
-            set { this._format = value; }
+            get { return this._format.ValueOrEmpty("query_string"); }
+            set { this._format = value.ValueOrEmpty("query_string"); }
+        }
+
+        public string ContentType
+        {
+            get { return this._contenttype.ValueOrEmpty("application/x-www-form-urlencoded"); }
+            set { this._contenttype = value.ValueOrEmpty("application/x-www-form-urlencoded"); }
         }
 
         /// <summary>
         /// HttpClient实例
         /// </summary>
-        public HttpClient Client { private get; set; }
+        protected HttpClient Client { get; set; }
 
 
-
-        /// <summary>
-        /// 同步POST
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        public virtual string Post(string url, object content)
+        public virtual string Get(string url, int? timeout = null)
         {
+            var tokenSource = new CancellationTokenSource();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             try
             {
-                string result = null;
-                string str_content = this.GetContent(content);
-
-                this.Verify(url, str_content);
+                this.Verify(url);
                 this.SetServicePoint(url);
 
-                using (HttpContent httpContent = new StringContent(str_content, this.Charset, "application/x-www-form-urlencoded"))
-                {
-                    HttpResponseMessage response = this.Client.PostAsync(url, httpContent).Result;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        result = response.Content.ReadAsStringAsync().Result;
-                    }
-                    else
-                    {
-                        //LogHelper.Error(string.Format("HttpClientUtils BaseClient Post StatusCode：【{0}】，ReasonPhrase：【{1}】", response.StatusCode, response.ReasonPhrase));
-                    }
+                var result = default(string);
 
-                    httpContent.Dispose();
+                var task = this.Client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
+                if (task.Wait(millisecondsTimeout: timeout ?? this.Timeout, cancellationToken: tokenSource.Token))
+                {
+                    var response = task.Result;
+                    //if (response.IsSuccessStatusCode)
+                    //    result = this.Charset.GetString(response.Content.ReadAsByteArrayAsync().Result);
+                    //else
+                    //    LogHelper.Error($"BaseClient.Get【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
+                    result = this.GetResultString(response);
+                    //if (result == null)
+                    //    LogHelper.Error($"BaseClient.Get【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
                 }
-                return result;
+                else
+                {
+                    tokenSource.Cancel();
+                    throw new OperationCanceledException("请求超时，系统已自动断开链接");
+                }
+
+                return result.ValueOrEmpty();
             }
-            catch (System.Threading.ThreadAbortException ex)
+            #region catch + finally
+
+            catch (AggregateException ex)
             {
-                //LogHelper.Error(ex);
-                System.Threading.Thread.ResetAbort();
-                throw ex;
+                var list_err_msg = new List<string>();
+                ex.Handle(innerException =>
+                {
+                    list_err_msg.Add(innerException?.InnerException?.Message.ValueOrEmpty(innerException?.Message));
+                    return true;
+                });
+
+                //throw new AggregateException(list_err_msg.Join());
+                throw new Exception(list_err_msg.Join());   // 转为普通Exception
             }
+            //catch (System.Threading.ThreadAbortException ex)
+            //{
+            //    LogHelper.Error(JSON.Serialize(new { Url = url, ThreadAbortException = ex }));
+            //    System.Threading.Thread.ResetAbort();
+            //    throw ex;
+            //}
             catch (HttpRequestException ex)
             {
-                //LogHelper.Error(ex);
                 throw ex;
             }
             catch (Exception ex)
             {
-                //LogHelper.Error(ex.GetType().FullName);
-                //LogHelper.Error(ex);
                 throw ex;
             }
+            finally
+            {
+                watch.Stop();
+                tokenSource.Dispose();
+            }
+
+            #endregion catch + finally
         }
 
-        /// <summary>
-        /// 同步POST文件
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="content"></param>
-        /// <param name="fileParams">文件列表</param>
-        /// <returns></returns>
-        public virtual string Post(string url, object content, IDictionary<string, FileItem> fileParams)
+        public virtual string Post(string url, object content, object header = null, int? timeout = null)
         {
-            if (fileParams == null || fileParams.Count == 0)
-                return Post(url, content);
+            var str_content = default(string);
+            var tokenSource = new CancellationTokenSource();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             try
             {
-                string result = null;
-                string str_content = this.GetContent(content);
-
-                this.Verify(url, str_content);
+                this.Verify(url);
                 this.SetServicePoint(url);
 
-                using (MultipartFormDataContent httpContent = new MultipartFormDataContent())
+                var result = default(string);
+                str_content = this.GetContentString(content);
+                using (HttpContent requestContent = new StringContent(str_content, this.Charset, this.ContentType))
                 {
+                    this.SetContentHeader(requestContent, header);
+
+                    var task = this.Client.PostAsync(url, requestContent);
+                    if (task.Wait(millisecondsTimeout: timeout ?? this.Timeout, cancellationToken: tokenSource.Token))
+                    {
+                        var response = task.Result;
+                        //if (response.IsSuccessStatusCode)
+                        //    result = this.Charset.GetString(response.Content.ReadAsByteArrayAsync().Result);
+                        //else
+                        //    LogHelper.Error($"BaseClient.Post【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
+                        result = this.GetResultString(response);
+                        //if (result == null)
+                        //    LogHelper.Error($"BaseClient.Post【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
+
+                        requestContent.Dispose();
+                    }
+                    else
+                    {
+                        requestContent.Dispose();
+                        tokenSource.Cancel();
+                        throw new OperationCanceledException("请求超时，系统已自动断开链接");
+                    }
+                }
+
+                return result.ValueOrEmpty();
+            }
+            #region catch + finally
+
+            catch (AggregateException ex)
+            {
+                var list_err_msg = new List<string>();
+                ex.Handle(innerException =>
+                {
+                    list_err_msg.Add(innerException.Message);
+                    return true;
+                });
+
+                //throw new AggregateException(list_err_msg.Join());
+                throw new Exception(list_err_msg.Join());   // 转为普通Exception
+            }
+            catch (HttpRequestException ex)
+            {
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                watch.Stop();
+                tokenSource.Dispose();
+            }
+
+            #endregion catch + finally
+        }
+
+        public virtual string Post(string url, object content, IDictionary<string, FileItem> fileParams, object header = null, int? timeout = null)
+        {
+            if (fileParams == null || fileParams.Count == 0)
+                return Post(url, content, header, timeout);
+
+            var tokenSource = new CancellationTokenSource();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            try
+            {
+                this.Verify(url);
+                this.SetServicePoint(url);
+
+                var result = default(string);
+                using (var requestContent = new MultipartFormDataContent())
+                {
+                    this.SetContentHeader(requestContent, header);
+
                     #region 添加文件
 
                     IEnumerator<KeyValuePair<string, FileItem>> fileEnum = fileParams.GetEnumerator();
                     while (fileEnum.MoveNext())
                     {
-                        string key = fileEnum.Current.Key;
-                        FileItem fileItem = fileEnum.Current.Value;
+                        var key = fileEnum.Current.Key;
+                        var fileItem = fileEnum.Current.Value;
 
                         //StreamContent streamConent = new StreamContent(fileItem.GetStream());
                         //ByteArrayContent imageContent = new ByteArrayContent(streamConent.ReadAsByteArrayAsync().Result);
                         //imageContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
                         //httpContent.Add(imageContent, key, fileItem.GetFileName());
 
-                        httpContent.Add(new StreamContent(fileItem.GetStream()), key, fileItem.GetFileName());
+                        var s_content = new StreamContent(fileItem.GetStream());
+                        requestContent.Add(s_content, key, fileItem.GetFileName());
+                        //requestContent.Add(s_content, key, $"\"{fileItem.GetFileName()}\"");
                     }
 
                     #endregion 添加文件
 
                     #region 添加参数
 
-                    if (content is Hashtable)
+                    if (content == null)
+                    {// 无参数
+                    }
+                    else if (content is IDictionary)
                     {
-                        Hashtable param = content as Hashtable;
+                        var param = content as IDictionary;
                         foreach (string key in param.Keys)
-                        {
-                            httpContent.Add(new StringContent(param[key].ToString()), key);
-                        }
+                            requestContent.Add(new StringContent(param[key].ToString()), key);
+                    }
+                    else if (content is string)
+                    {
+                        //httpContent.Add(new StringContent(Convert.ToString(content), this.Charset, this.ContentType));
+                        requestContent.Add(new StringContent(Convert.ToString(content)));
+                    }
+                    else
+                    {
+                        var str_content = this.GetContentString(content);
+                        requestContent.Add(new StringContent(str_content, this.Charset));
                     }
 
                     #endregion 添加参数
 
-                    HttpResponseMessage response = this.Client.PostAsync(url, httpContent).Result;
-                    if (response.IsSuccessStatusCode)
+                    var task = this.Client.PostAsync(url, requestContent);
+                    if (task.Wait(millisecondsTimeout: timeout ?? this.Timeout, cancellationToken: tokenSource.Token))
                     {
-                        result = response.Content.ReadAsStringAsync().Result;
+                        var response = task.Result;
+                        //if (response.IsSuccessStatusCode)
+                        //    result = this.Charset.GetString(response.Content.ReadAsByteArrayAsync().Result);
+                        //else
+                        //    LogHelper.Error($"BaseClient.Post【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
+                        result = this.GetResultString(response);
+                        //if (result == null)
+                        //    LogHelper.Error($"BaseClient.Post【{url}】，【{watch.ElapsedMilliseconds} ms】，【StatusCode】：【{response.StatusCode}】，【ReasonPhrase】：【{response.ReasonPhrase}】");
+
+                        requestContent.Dispose();
                     }
                     else
                     {
-                        //LogHelper.Error(string.Format("HttpClientUtils BaseClient PostFile StatusCode：【{0}】，ReasonPhrase：【{1}】", response.StatusCode, response.ReasonPhrase));
+                        requestContent.Dispose();
+                        tokenSource.Cancel();
+                        throw new OperationCanceledException("请求超时，系统已自动断开链接");
                     }
-
-                    httpContent.Dispose();
                 }
 
-                return result;
+                return result.ValueOrEmpty();
             }
-            catch (System.Threading.ThreadAbortException ex)
+            #region catch + finally
+
+            catch (AggregateException ex)
             {
-                //LogHelper.Error(ex);
-                System.Threading.Thread.ResetAbort();
+                var list_err_msg = new List<string>();
+                ex.Handle(innerException =>
+                {
+                    list_err_msg.Add(innerException.Message);
+                    return true;
+                });
+
+                //throw new AggregateException(list_err_msg.Join());
+                throw new Exception(list_err_msg.Join());   // 转为普通Exception
+            }
+            catch (ThreadAbortException ex)
+            {
+                Thread.ResetAbort();
                 throw ex;
             }
             catch (HttpRequestException ex)
             {
-                //LogHelper.Error(ex);
                 throw ex;
             }
             catch (Exception ex)
             {
-                //LogHelper.Error(ex.GetType().FullName);
-                //LogHelper.Error(ex);
                 throw ex;
             }
+            finally
+            {
+                watch.Stop();
+                tokenSource.Dispose();
+            }
+
+            #endregion catch + finally
         }
 
         /// <summary>
@@ -192,116 +324,156 @@ namespace APP.Utility.HttpClientUtils
         /// <param name="url"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        public async virtual void PostAsync(string url, object content)
+        public virtual async void PostNoResponse(string url, object content, object header = null, int? timeout = null)
         {
             try
             {
-                string str_content = this.GetContent(content);
-
-                this.Verify(url, str_content);
+                this.Verify(url);
                 this.SetServicePoint(url);
 
-                HttpContent httpContent = new StringContent(str_content, this.Charset, "application/x-www-form-urlencoded");
+                var str_content = this.GetContentString(content);
+                HttpContent httpContent = new StringContent(str_content, this.Charset, this.ContentType);
 
-                await Task.Run(() => {
-                    bool Success = this.Client.PostAsync(url, httpContent)
-                    .ContinueWith(requestTask => {
+                this.SetContentHeader(httpContent, header);
+
+                await Task.Run(() =>
+                {
+                    var isCompleted = this.Client.PostAsync(url, httpContent)
+                    .ContinueWith(requestTask =>
+                    {
                         Task<HttpResponseMessage> response = requestTask;
                         if (response.Status == TaskStatus.RanToCompletion)
                         {
                             HttpResponseMessage result = response.Result;
                             result.EnsureSuccessStatusCode();
-                            result.Content.ReadAsStringAsync().ContinueWith(readTask => {
-                                //LogHelper.Debug(string.Format("HttpClientUtils BaseClient PostAsync：{0}", readTask.Result));
+                            result.Content.ReadAsStringAsync().ContinueWith(readTask =>
+                            {
+                                //LogHelper.Debug(string.Format("BaseClient.PostAsync：{0}", readTask.Result));
                             });
                         }
                     }).Wait(millisecondsTimeout: 20);
                 });
             }
-            catch (System.Threading.ThreadAbortException ex)
+            catch (AggregateException ex)
             {
-                //LogHelper.Error(ex);
-                System.Threading.Thread.ResetAbort();
+                var list_err_msg = new List<string>();
+                ex.Handle(innerException =>
+                {
+                    list_err_msg.Add(innerException.Message);
+                    return true;
+                });
+
+                //throw new AggregateException(list_err_msg.Join());
+                throw new Exception(list_err_msg.Join());   // 转为普通Exception
+            }
+            catch (ThreadAbortException ex)
+            {
+                Thread.ResetAbort();
                 throw ex;
             }
             catch (HttpRequestException ex)
             {
-                //LogHelper.Error(ex);
                 throw ex;
             }
             catch (Exception ex)
             {
-                //LogHelper.Error(ex.GetType().FullName);
-                //LogHelper.Error(ex);
                 throw ex;
             }
         }
 
+        public Task<string> PostAsync(string url, object content, object header = null, int? timeout = null) => throw new NotImplementedException();
 
-        /// <summary>
-        /// 构造postData
-        /// </summary>
-        /// <param name="content"></param>
-        /// <returns></returns>
-        private string GetContent(dynamic content)
+        public Task<string> GetAsync(string url, int? timeout = null) => throw new NotImplementedException();
+
+
+        protected virtual void SetContentHeader(HttpContent httpContent, dynamic header)
         {
-            string _content = string.Empty;
+            if (httpContent is HttpContent
+                && header is IDictionary)
+            {
+                var _header = header as IDictionary;
+                foreach (string k in _header.Keys)
+                {
+                    var v = _header[k].ValueOrEmpty();
+                    if (!v.IsNullOrWhiteSpace())
+                        httpContent.Headers.TryAddWithoutValidation(k, v);
+                }
+            }
+        }
+
+        private string GetContentString(object content)
+        {
+            var _content = string.Empty;
 
             if (content is string)
                 return Convert.ToString(content);
 
-            if (content is IDictionary)
+            if (content is IDictionary dic)
             {
                 switch (this.Format)
                 {
                     case "xml":
-                    _content = WebCommon.BuildXml(content);
-                    break;
+                        _content = WebCommon.BuildXml(dic);
+                        break;
 
+                    //case "json":
+                    //    _content = JSON.Serialize(dic);
+                    //    break;
+
+                    case "query_string":
                     case "hash":
                     default:
-                    _content = WebCommon.BuildHash(content, false);
-                    break;
+                        _content = WebCommon.BuildQueryString(dic, false);
+                        break;
                 }
             }
 
             return _content;
         }
 
-        private void Verify(string url, object content)
+        /// <summary>
+        /// 获取响应报文
+        /// 【部分通道响应StatusCode状态码非200，也能取到报文，需各自override相应规则】
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        protected virtual string GetResultString(HttpResponseMessage response)
+        {
+            string result = null;
+
+            if (response.IsSuccessStatusCode)
+                result = this.Charset.GetString(response.Content.ReadAsByteArrayAsync().Result);
+
+            return result;
+        }
+
+        private void Verify(string url)
         {
             if (Client == null)
                 throw new Exception("连接对象为空");
 
             if (string.IsNullOrWhiteSpace(url))
                 throw new Exception("请求地址为空");
-
-            if (content == null)
-                throw new Exception("请求内容为空");
-
-            //if (content.GetType() != typeof(string))
-            if (!(content is string))
-                throw new Exception("请求内容类型错误");
         }
 
         private void SetServicePoint(string url)
         {
+            var uri = new Uri(url);
             System.Net.ServicePointManager.Expect100Continue = false;
             var servicePoint = System.Net.ServicePointManager.FindServicePoint(new Uri(url));
             if (servicePoint != null)
-                servicePoint.ConnectionLeaseTimeout = (1000 * 60 * 5);
+                servicePoint.ConnectionLeaseTimeout = 1000 * 60 * 5;
 
-            if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+            if ("https".Same(uri.Scheme))
             {
                 //System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 //System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
+                System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
+
                 System.Net.ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
             }
         }
 
-        private bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
-        {
-            return true;
-        }
+        private bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors) => true;
     }
 }

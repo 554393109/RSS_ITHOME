@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+
 using APP.Utility;
 using APP.Utility.Extension;
 using APP.Utility.HttpClientUtils;
@@ -26,7 +27,6 @@ namespace APP
         private static readonly object lock_isShowTip = new object();
         private static bool _isWAP;
         private static bool _isShowTip;
-        private const string baseUrl_WAP = "https://m.ithome.com/";
         private const string baseUrl_WEB = "https://www.ithome.com/";
         private static string urlRSS = baseUrl_WEB + "rss/";
         private const string _form_title = "更新时间：{0}";
@@ -43,8 +43,8 @@ namespace APP
         public MainForm(string[] arr_param)
         {
             init_param = arr_param ?? new string[0] { };
-            isWAP = !init_param.Contains("/web", StringComparison.OrdinalIgnoreCase);
-            isShowTip = !init_param.Contains("/notip", StringComparison.OrdinalIgnoreCase);
+            isWAP = !init_param.Contains("/web");
+            isShowTip = init_param.Contains("/tip");
 
             InitializeComponent();
 
@@ -57,8 +57,11 @@ namespace APP
             this.tsmi_isShowTip_1.Click += tsmi_isShowTip_Click;
 
             handler = new SetDataHandler(SetData);
+#if !DEBUG
             timmer = new Timer() { Interval = 1000 * 30, Enabled = true };
             timmer.Tick += timmer_Tick;
+#endif
+
         }
 
         private void tsmi_isWap_Click(object sender, EventArgs e)
@@ -110,13 +113,13 @@ namespace APP
 #if !DEBUG
             Task.Run(() => {
 #endif
-            var _clientContext = new ClientContext(new CommonClient());
+            var client = new CommonClient();
             try
             {
-                var _str_response_xml = _clientContext.Post(urlRSS, null);
+                var _str_response_xml = client.Get(urlRSS);
                 var ienum = default(IEnumerator);
-                if (!_str_response_xml.IsNullOrWhiteSpace()
-                && !str_response_xml.Equals(_str_response_xml, StringComparison.OrdinalIgnoreCase))
+                if (_str_response_xml.IsNotEmpty()
+                && !str_response_xml.Same(_str_response_xml))
                 {
                     str_response_xml = _str_response_xml;
                     var xmlDoc = new XmlDocument();
@@ -157,22 +160,22 @@ namespace APP
                     var link_WAP = string.Empty;
                     var newsID = string.Empty;
 
-                    if ("link".Equals(item.PreviousSibling.Name, StringComparison.OrdinalIgnoreCase))
+                    if ("link".Same(item.PreviousSibling.Name))
                         _str_last_title = title;
 
-                    if (!link_WEB.IsNullOrWhiteSpace())
+                    if (link_WEB.IsNotEmpty())
                     {
                         var arr = link_WEB.GetArray("/");
                         if (arr.Length > 4)
                             newsID = "{0}{1}{2}".ToFormat(arr[arr.Length - 3], arr[arr.Length - 2], arr[arr.Length - 1]).TrimAny(".htm", ".html").TrimStart('0');
 
-                        if (!newsID.IsNullOrWhiteSpace() && isWAP)
+                        if (isWAP && newsID.IsNotEmpty())
                             link_WAP = "https://m.ithome.com/html/{0}.htm".ToFormat(newsID);
                     }
 
                     //var description = item.SelectSingleNode("description").InnerText;
-                    var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", item.SelectSingleNode("pubDate").InnerText.ToDateTime(DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
-                    this.dgv_list.Rows.Add(new object[] { title, pubDate_sub, /*description,*/ link_WEB.ValueOrEmpty(), link_WAP.ValueOrEmpty(), newsID.ValueOrEmpty() });
+                    var pubDate_sub = string.Format("{0:yy-MM-dd HH:mm:ss}", item.SelectSingleNode("pubDate").InnerText.ToDateTime(formatExact: null, DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                    this.dgv_list.Rows.Add(new[] { title, pubDate_sub, /*description,*/ link_WEB.ValueOrEmpty(), link_WAP.ValueOrEmpty(), newsID.ValueOrEmpty() });
                 }
 
                 if (!str_last_title.Equals(_str_last_title, StringComparison.OrdinalIgnoreCase))
@@ -249,18 +252,18 @@ namespace APP
             switch (m.Msg)
             {
                 case WM_HOTKEY:
-                switch (m.WParam.ToInt32())
-                {
-                    case 201:
-                        {
-                            if (this.WindowState == FormWindowState.Minimized)
-                                Show(true);
-                            else
-                                Show(false);
-                        }
-                        break;
-                }
-                break;
+                    switch (m.WParam.ToInt32())
+                    {
+                        case 201:
+                            {
+                                if (this.WindowState == FormWindowState.Minimized)
+                                    Show(true);
+                                else
+                                    Show(false);
+                            }
+                            break;
+                    }
+                    break;
             }
             base.WndProc(ref m);
         }

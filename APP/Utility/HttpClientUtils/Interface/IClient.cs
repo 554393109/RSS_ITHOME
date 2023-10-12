@@ -1,17 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace APP.Utility.HttpClientUtils
+﻿namespace APP.Utility.HttpClientUtils
 {
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
     public interface IClient
     {
-        string Post(string url, object content);
+        #region POST
 
-        string Post(string url, object content, IDictionary<string, FileItem> fileParams);
+        string Post(string url, object content, object header = null, int? timeout = null);
 
-        //Task PostAsync(string requestUri, object content);
-        void PostAsync(string url, object content);
+        string Post(string url, object content, IDictionary<string, FileItem> fileParams, object header = null, int? timeout = null);
 
-        //TResult PostAsync<TResult>(string url, object content);
+        Task<string> PostAsync(string url, object content, object header = null, int? timeout = null);
+
+        void PostNoResponse(string url, object content, object header = null, int? timeout = null);
+
+        //TResult PostAsync<TResult>(string url, object content, int? timeout = null);
+
+        #endregion POST
+
+        #region GET
+
+        string Get(string url, int? timeout = null);
+
+        Task<string> GetAsync(string url, int? timeout = null);
+
+        #endregion GET
     }
 }

@@ -1,11 +1,9 @@
-﻿#region Imports
-using System;
-using System.Collections.Generic;
-using System.Linq;
-#endregion
-
-namespace APP.Utility.Extension
+﻿namespace APP.Utility.Extension
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
     public static class ListExtension
     {
         public static List<TResult> ToList<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
@@ -29,6 +27,29 @@ namespace APP.Utility.Extension
 
             list_new.AddRange(list_old);
             return list_new;
+        }
+
+        /// <summary>
+        /// string.Join(";", list);
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <param name="separator"></param>
+        /// <returns></returns>
+        public static string Join<T>(this IList<T> list, string separator = ";")
+        {
+            var result = string.Empty;
+
+            try
+            {
+                if (list != null || list.Count > 0)
+                    result = string.Join(separator, list);
+            }
+            catch /*(Exception ex)*/
+            {
+            }
+
+            return result;
         }
     }
 }

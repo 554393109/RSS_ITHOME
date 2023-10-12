@@ -54,6 +54,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
@@ -90,6 +91,7 @@
     <Compile Include="Utility\HttpClientUtils\Strategy\BaseClient.cs" />
     <Compile Include="Utility\HttpClientUtils\Strategy\CommonClient.cs" />
     <Compile Include="Utility\HttpClientUtils\WebCommon.cs" />
+    <Compile Include="Utility\RegexHelper.cs" />
     <Compile Include="Utility\UniqueID\Generate_16.cs" />
     <Compile Include="Utility\UniqueID\Generate_19.cs" />
     <EmbeddedResource Include="MainForm.resx">

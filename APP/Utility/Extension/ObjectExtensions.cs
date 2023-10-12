@@ -1,31 +1,18 @@
-﻿/************************************************************************
- * 文件标识：  41788caa-8d4c-4e9d-a1c7-ceab30e893ec
- * 项目名称：  CySoft.Utility.Extension  
- * 项目描述：  
- * 类 名 称：  ObjectExtensions
- * 版 本 号：  v1.0.0.0 
- * 说    明：  
- * 作    者：  尹自强
- * 创建时间：  2018/1/30 16:24:57
- * 更新时间：  2018/1/30 16:24:57
-************************************************************************
- * Copyright @ 尹自强 2018. All rights reserved.
-************************************************************************/
-
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace APP.Utility.Extension
+﻿namespace APP.Utility.Extension
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.RegularExpressions;
+
     public static class ObjectExtensions
     {
         #region 类型判断
 
         /// <summary>
         /// 是否为ip
+        /// @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$"
         /// </summary>
         /// <param name="ip"></param>
         /// <returns></returns>
@@ -37,7 +24,7 @@ namespace APP.Utility.Extension
             if (obj != null)
                 ip = obj.ToString();
 
-            isCorrect = Regex.IsMatch(ip, @"^((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)$");
+            isCorrect = RegexHelper.IP.IsMatch(ip);
             return isCorrect;
         }
 
@@ -54,7 +41,7 @@ namespace APP.Utility.Extension
             if (obj != null)
                 url = obj.ToString();
 
-            isCorrect = Regex.IsMatch(url, @"^((http|https)://)(([a-zA-Z0-9\._-]+\.[a-zA-Z]{2,6})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,4})*(/[a-zA-Z0-9\&%_\./-~-]*)?");
+            isCorrect = RegexHelper.URL.IsMatch(url);
             return isCorrect;
         }
 
@@ -107,6 +94,22 @@ namespace APP.Utility.Extension
         }
 
         /// <summary>
+        /// 判断是否Date
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static bool IsDate(this object obj)
+        {
+            var isCorrect = false;
+            var dt = default(DateTime);
+
+            if (obj != null)
+                isCorrect = DateTime.TryParse(obj.ToString(), out dt);
+
+            return isCorrect;
+        }
+
+        /// <summary>
         /// 判断是否DateTime
         /// </summary>
         /// <param name="obj"></param>
@@ -131,10 +134,41 @@ namespace APP.Utility.Extension
         public static bool IsDateTime2(this object obj)
         {
             var isCorrect = false;
+            if (obj.IsNotEmpty())
+            {
+                var val = obj.ValueOrEmpty().ReplaceAny(new string[] { " ", "年", "月", "日", "时", "分", "秒", "-", "T", "/", ":" }, string.Empty); // 替换所有特殊字符
+                if (val.IsLong())
+                {
+                    var dt = default(DateTime);
+
+                    if (val.Length == 6)
+                        isCorrect = DateTime.TryParseExact(val, "yyMMdd", null, System.Globalization.DateTimeStyles.None, out dt);
+                    else if (val.Length == 8)
+                        isCorrect = DateTime.TryParseExact(val, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out dt);
+                    else if (val.Length == 12)
+                        isCorrect = DateTime.TryParseExact(val, "yyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out dt);
+                    else if (val.Length == 14)
+                        isCorrect = DateTime.TryParseExact(val, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out dt);
+                }
+            }
+
+            return isCorrect;
+        }
+
+        /// <summary>
+        /// 判断是否DateTime
+        /// 【含年月日时分秒使用】
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        [Obsolete]
+        private static bool IsDateTime2_OLD(this object obj)
+        {
+            var isCorrect = false;
             var dt = default(DateTime);
 
             var val = obj.ValueOrEmpty();
-            if (!val.IsNullOrWhiteSpace())
+            if (val.IsNotEmpty())
             {
                 if (val.IndexOf("年", StringComparison.OrdinalIgnoreCase) > -1)
                     // 2018年01月02日 12点34分56秒
@@ -147,8 +181,12 @@ namespace APP.Utility.Extension
             return isCorrect;
         }
 
+
+
+
+
         /// <summary>
-        /// 判断是否DateTime且是默认时间
+        /// 判断是否DateTime且是默认时间【1900-01-01 00:00:00】
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
@@ -167,7 +205,7 @@ namespace APP.Utility.Extension
         }
 
         /// <summary>
-        /// 判断是否Null或string.Empty
+        /// 为【null】或【string.Empty】或【纯空格字符】
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
@@ -179,6 +217,19 @@ namespace APP.Utility.Extension
                 isCorrect = true;
 
             return isCorrect;
+        }
+
+        /// <summary>
+        /// 有值，不为【null】或【string.Empty】或【纯空格字符】
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static bool IsNotEmpty(this object obj)
+        {
+            if (obj == null || string.IsNullOrWhiteSpace(obj.ToString()))
+                return false;
+
+            return true;
         }
 
         #endregion 类型判断
@@ -204,7 +255,27 @@ namespace APP.Utility.Extension
         }
 
         /// <summary>
-        /// 
+        /// 转Short
+        /// (-32768, 32767)
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <returns></returns>
+        public static short ToInt16(this object value, short defaultvalue = 0)
+        {
+            if (value.IsNullOrWhiteSpace())
+                return defaultvalue;
+
+            decimal result;
+            if (decimal.TryParse(value.ToString(), out result))
+                return (short)result;
+
+            return defaultvalue;
+        }
+
+        /// <summary>
+        /// 转Int
+        /// (-2147483648, 2147483647)
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultvalue">默认值</param>
@@ -214,15 +285,16 @@ namespace APP.Utility.Extension
             if (value.IsNullOrWhiteSpace())
                 return defaultvalue;
 
-            int result;
-            if (int.TryParse(value.ToString(), out result))
-                return result;
+            decimal result;
+            if (decimal.TryParse(value.ToString(), out result))
+                return (int)result;
 
             return defaultvalue;
         }
 
         /// <summary>
-        /// 
+        /// 转Long
+        /// (-9223372036854775808, 9223372036854775807)
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultvalue">默认值</param>
@@ -232,9 +304,9 @@ namespace APP.Utility.Extension
             if (value.IsNullOrWhiteSpace())
                 return defaultvalue;
 
-            long result;
-            if (long.TryParse(value.ToString(), out result))
-                return result;
+            decimal result;
+            if (decimal.TryParse(value.ToString(), out result))
+                return (long)result;
 
             return defaultvalue;
         }
@@ -258,7 +330,8 @@ namespace APP.Utility.Extension
         }
 
         /// <summary>
-        /// 
+        /// 转Decimal
+        /// (-79228162514264337593543950335, 79228162514264337593543950335)
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultvalue">默认值</param>
@@ -276,12 +349,14 @@ namespace APP.Utility.Extension
         }
 
         /// <summary>
-        /// 
+        /// 转DateTime
+        /// (0001-01-01 00:00:00.000, 9999-12-31 23:59:59.999)
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="formatExact">格式化，如：yyyyMMddHHmmss</param>
         /// <param name="defaultvalue">默认值</param>
         /// <returns></returns>
-        public static DateTime ToDateTime(this object value, string defaultvalue = "1900-01-01 00:00:00.000")
+        public static DateTime ToDateTime(this object value, string formatExact = "", string defaultvalue = "1900-01-01 00:00:00.000")
         {
             if (!defaultvalue.IsDateTime())
                 defaultvalue = "1900-01-01 00:00:00.000";
@@ -290,10 +365,35 @@ namespace APP.Utility.Extension
                 return DateTime.Parse(defaultvalue);
 
             DateTime result;
-            if (DateTime.TryParse(value.ToString(), out result))
-                return result;
+            if (formatExact.IsNullOrWhiteSpace())
+            {
+                if (DateTime.TryParse(value.ToString(), out result))
+                    return result;
+            }
+            else
+            {
+                try
+                {
+                    result = DateTime.ParseExact(value.ToString(), formatExact, null);
+                    return result;
+                }
+                catch { }
+            }
 
             return DateTime.Parse(defaultvalue);
+        }
+
+        /// <summary>
+        /// 转DateTime
+        /// (0001-01-01 00:00:00.000, 9999-12-31 23:59:59.999)
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultvalue">默认值</param>
+        /// <param name="formatExact">格式化，如：yyyyMMddHHmmss</param>
+        /// <returns></returns>
+        public static DateTime ToDateTime(this object value, Nullable<DateTime> defaultvalue, string formatExact = "")
+        {
+            return ToDateTime(value, formatExact, "{0:yyyy-MM-dd HH:mm:ss.fff}".ToFormat(defaultvalue ?? new DateTime(1990, 1, 1)));
         }
 
         public static T ToEnum<T>(this object value)
@@ -318,7 +418,7 @@ namespace APP.Utility.Extension
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static string ToSBC(this object value)
+        public static string ToStringSBC(this object value)
         {
             if (value.IsNullOrWhiteSpace())
                 return string.Empty;
@@ -344,7 +444,7 @@ namespace APP.Utility.Extension
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static string ToDBC(this object value)
+        public static string ToStringDBC(this object value)
         {
             if (value.IsNullOrWhiteSpace())
                 return string.Empty;
@@ -368,7 +468,7 @@ namespace APP.Utility.Extension
 
         /// <summary>
         /// 为null时使用string.Empty
-        /// obj?.ToString() ?? string.Empty;
+        /// <code>obj?.ToString() ?? string.Empty;</code>
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
@@ -383,10 +483,10 @@ namespace APP.Utility.Extension
 
         /// <summary>
         /// 为null或空时使用val
-        /// (obj == null || string.IsNullOrWhiteSpace(obj.ToString())) ? val.ValueOrEmpty() : obj.ToString();
+        /// <code>(obj == null || string.IsNullOrWhiteSpace(obj.ToString())) ? val.ValueOrEmpty() : obj.ToString();</code>
         /// </summary>
         /// <param name="obj"></param>
-        /// <param name="val"></param>
+        /// <param name="val">val.ValueOrEmpty()</param>
         /// <returns></returns>
         public static string ValueOrEmpty(this object obj, string val)
         {
@@ -417,5 +517,158 @@ namespace APP.Utility.Extension
 
             return obj.ToString();
         }
+
+
+
+
+
+        ///// <summary>
+        ///// 序列化为Hashtable
+        ///// <code><![CDATA[JSON.ConvertToType<Hashtable>(obj)]]></code>
+        ///// </summary>
+        ///// <param name="obj"></param>
+        ///// <returns></returns>
+        //public static Hashtable ToHashtable(this object obj)
+        //{
+        //    if (obj == null)
+        //        throw new ArgumentNullException("obj");
+
+        //    return JSON.ConvertToType<Hashtable>(obj);
+        //}
+
+        ///// <summary>
+        ///// <code>JSON.Serialize(obj)</code>
+        ///// </summary>
+        ///// <param name="obj"></param>
+        ///// <param name="blackField">字段黑名单（递归匹配嵌套对象，集合类型无效）【blackField和whiteField互斥，blackField优先】</param>
+        ///// <param name="whiteField">字段白名单（递归匹配嵌套对象，集合类型无效）【blackField和whiteField互斥，blackField优先】</param>
+        ///// <returns></returns>
+        //public static string ToJson(this object obj
+        //    , string[] blackField = null, string[] whiteField = null)
+        //{
+        //    return JSON.Serialize(obj, blackField: blackField, whiteField: whiteField);
+        //}
+
+        ///// <summary>
+        ///// <code>Serialize(dynamic obj, string root)</code>
+        ///// </summary>
+        ///// <param name="obj"></param>
+        ///// <param name="root">根节点</param>
+        ///// <returns></returns>
+        //public static string ToXml(this object obj, string root = "xml")
+        //{
+        //    return XML.Serialize(obj, root);
+        //}
+
+        //public static string ToXmlString(this object obj)
+        //{
+        //    if (obj == null)
+        //        return string.Empty;
+
+        //    #region 转换为IDictionary
+
+        //    IDictionary parameters_temp;
+        //    if (obj is IDictionary)
+        //        parameters_temp = obj as IDictionary;
+        //    else
+        //        parameters_temp = JSON.ConvertToType<Hashtable>(obj);
+
+        //    if (parameters_temp == null || parameters_temp.Count == 0)
+        //        return string.Empty;
+
+        //    #endregion 转换为IDictionary
+
+        //    #region 拼接QueryString
+
+        //    var builder = new StringBuilder();
+        //    builder.Append("<xml>");
+        //    foreach (string key in parameters_temp.Keys)
+        //    {
+        //        if (key.IsNullOrWhiteSpace())
+        //            continue;
+
+        //        var val = parameters_temp[key].ValueOrEmpty();
+        //        builder.Append($"<{key}>").Append(val).Append($"</{key}>");
+        //    }
+        //    builder.Append("</xml>");
+
+        //    #endregion 拼接QueryString
+
+        //    return builder.ToString();
+        //}
+
+        //public static string ToQueryString(this object obj, bool needEncode = true)
+        //{
+        //    if (obj == null)
+        //        return string.Empty;
+
+        //    #region 转换为IDictionary
+
+        //    IDictionary parameters_temp;
+        //    if (obj is IDictionary)
+        //        parameters_temp = obj as IDictionary;
+        //    else
+        //        parameters_temp = JSON.ConvertToType<Hashtable>(obj);
+
+        //    if (parameters_temp == null || parameters_temp.Count == 0)
+        //        return string.Empty;
+
+        //    #endregion 转换为IDictionary
+
+        //    #region 拼接QueryString
+
+        //    var builder = new StringBuilder();
+        //    foreach (string key in parameters_temp.Keys)
+        //    {
+        //        if (key.IsNullOrWhiteSpace())
+        //            continue;
+
+        //        var val = parameters_temp[key].ValueOrEmpty();
+        //        builder.Append($"&{key}=").Append(needEncode ? val.UrlEscape() : val);
+        //    }
+
+        //    #endregion 拼接QueryString
+
+        //    return builder.ToString().TrimStart('&');
+        //}
+
+        //public static string ToQueryStringSorted(this object obj, bool needEncode = true)
+        //{
+        //    if (obj == null)
+        //        return string.Empty;
+
+        //    #region 转换为SortedDictionary<string, string>
+
+        //    SortedDictionary<string, string> parameters_temp;
+        //    if (obj is SortedDictionary<string, string>)
+        //        parameters_temp = obj as SortedDictionary<string, string>;
+        //    else if (obj is IDictionary)
+        //    {
+        //        var parameters = obj as IDictionary;
+        //        parameters_temp = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // （SortedDictionary默认构造器忽略大小写，若要大小写敏感需传入StringComparer.Ordinal）
+        //        foreach (DictionaryEntry item in parameters)
+        //            parameters_temp[item.Key.ValueOrEmpty()] = item.Value.ValueOrEmpty();
+        //    }
+        //    else
+        //        parameters_temp = JSON.ConvertToType<SortedDictionary<string, string>>(obj);
+
+        //    #endregion 转换为SortedDictionary<string, string>
+
+        //    #region 拼接QueryString
+
+        //    var builder = new StringBuilder();
+        //    foreach (string key in parameters_temp.Keys)
+        //    {
+        //        if (key.IsNullOrWhiteSpace())
+        //            continue;
+
+        //        var val = parameters_temp[key].ValueOrEmpty();
+        //        builder.Append($"&{key}=").Append(needEncode ? val.UrlEscape() : val);
+        //    }
+
+        //    #endregion 拼接QueryString
+
+        //    return builder.ToString().TrimStart('&');
+        //}
     }
 }
